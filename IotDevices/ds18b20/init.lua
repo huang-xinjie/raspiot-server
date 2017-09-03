@@ -13,7 +13,6 @@ sconn = nil
 
 function readout(temp)
     for addr, temp in pairs(temp) do
-        print(temp .. '*C')
         sconn:send(temp .. '*C')
     end
     sconn = nil
@@ -28,12 +27,12 @@ end
 
 function sayHelloToManager(json)
     srv = net.createConnection(net.TCP, 0)
-    srv:connect(23333, "192.168.1.242")
+    srv:connect(22223, "192.168.1.242")
     srv:send(json)
     srv:on("receive", function(sck, c) 
         print(c) 
         recvJson = sjson.decode(c)
-        if recvJson.response == 'finish' then
+        if recvJson.response == 'Setup completed' then
             return true
         else 
             sayHelloToManager(json)
@@ -44,9 +43,9 @@ end
 function buildJSON(ip, mac)
     msgtable = {}
     msgtable.ip = ip
-    msgtable.cmd = ""
     msgtable.mac = mac
     msgtable.device = "ds18b20"
+    msgtable.identity = "device"
     msgtable.repository = "raspIot"
     msgtable.iotServer = "DS18B20"
     
