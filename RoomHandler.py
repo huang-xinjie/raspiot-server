@@ -33,12 +33,12 @@ def addRoom(newRoomName):
     if os.path.exists(RoomListFile):
         with open(RoomListFile, 'rb') as roomListFileRb:
             roomList = pickle.load(roomListFileRb)
-        roomList.append(buildRoomDict(newRoomName))
+        roomList.append(newRoomName)
         with open(RoomListFile, 'wb') as roomListFileWb:
             pickle.dump(roomList, roomListFileWb)
     else:
         with open(RoomListFile, 'wb') as roomListFileWb:
-            roomList = [buildRoomDict(newRoomName)]
+            roomList = [newRoomName]
             pickle.dump(roomList, roomListFileWb)
 
     return getRoomList()
@@ -57,7 +57,7 @@ def deleteRoom(roomName):
         if os.path.exists(RoomListFile):
             with open(RoomListFile, 'rb') as roomListFileRb:
                 roomList = pickle.load(roomListFileRb)
-            roomList.remove(buildRoomDict(roomName))
+            roomList.remove(roomName)
             with open(RoomListFile, 'wb') as roomListFileWb:
                 pickle.dump(roomList, roomListFileWb)
         else:
@@ -77,7 +77,7 @@ def getRoomList():
         with open(ROOM_PATH + '.roomListFile.pkl', 'rb') as roomListFileRb:
             roomList = pickle.load(roomListFileRb)
             for room in roomList:
-                roomJsonList.append(room)
+                roomJsonList.append(buildRoomDict(room))
     else:
         with open(ROOM_PATH + '.roomListFile.pkl', 'wb') as roomListFileWb:
             pickle.dump(roomJsonList, roomListFileWb)

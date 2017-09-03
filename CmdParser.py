@@ -36,9 +36,8 @@ def delCommand(conn, target, value):
     conn.close()
 
 
-def commandParser(conn, Json):
+def cmdParser(conn, command):
     # cmd, target, value = json.loads(Json) #以免json的Key顺序乱了，不够保险
-    command = json.loads(Json)
     cmd, target, value = command['cmd'], command['target'], command['value']
     if cmd == "get":
         getCommand(conn, target, value)
