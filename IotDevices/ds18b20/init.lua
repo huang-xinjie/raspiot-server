@@ -1,9 +1,10 @@
 -- ds18b20_init.lua
+station_config = {}
+station_config.ssid = "ssid"
+station_config.pwd = "password"
+
 print('Setting up WIFI...')
 wifi.setmode(wifi.STATION)
-station_config = {}
-station_config.ssid = "what_the_hell"
-station_config.pwd = "daiguaCancan"
 wifi.sta.config(station_config)
 wifi.sta.connect()
 
