@@ -16,9 +16,9 @@ class IotHandlerThread(threading.Thread):
         self.recvdata = recvdata
 
     def run(self):
-        self.IotHandler(self.conn, self.recvdata)
+        self.IotServerSetup(self.conn, self.recvdata)
 
-    def IotHandler(self, conn, recvdata):
+    def IotServerSetup(self, conn, recvdata):
         ip = recvdata['ip']
         mac = recvdata['mac']
         module = recvdata['iotServer']
