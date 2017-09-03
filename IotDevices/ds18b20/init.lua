@@ -2,8 +2,8 @@
 print('Setting up WIFI...')
 wifi.setmode(wifi.STATION)
 station_config = {}
-station_config.ssid = "your ssid"
-station_config.pwd = "your passwd"
+station_config.ssid = "what_the_hell"
+station_config.pwd = "daiguaCancan"
 wifi.sta.config(station_config)
 wifi.sta.connect()
 

@@ -3,8 +3,9 @@ import socket
 class DS18B20:
     temperature = ''
 
-    def __init__(self, deviceIp):
+    def __init__(self, deviceIp, deviceMac):
         self.ip = deviceIp
+        self.mac = deviceMac
 
 
     def getTemp(self):
