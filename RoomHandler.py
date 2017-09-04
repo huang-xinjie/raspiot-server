@@ -8,39 +8,28 @@ import os
 import json
 import pickle
 import shutil
-from GlobalConstant import *
+from GlobalConstant import ROOM_PATH, RoomListFile, STANDARD_INITIAL_TIME
 
 
 
-def addRoom(newRoomName):
+def addRoom(roomName):
     '''
     Add new room to roomList,
     and create a new folder for the room,
-    and create a .deviveListFile to record all devices of the room
+    and create a .roomContentFile to record all devices of the room
     '''
-    roomName = ROOM_PATH+newRoomName
 
-    if os.path.exists(roomName):
+    if os.path.exists(ROOM_PATH + roomName):
         return 'Room already exists.'
     # Add new folder and initial
-    os.makedirs(roomName)
-    with open(roomName + '/.deviceListFile.pkl', 'wb') as deviceListFile:
-        pickle.dump(buildRoomDict(newRoomName), deviceListFile)
-
+    os.makedirs(ROOM_PATH + roomName)
+    saveRoomContentToFile(buildNewRoomContentDict(roomName))
     # Add new room information to .roomListFile
-    
-    if os.path.exists(RoomListFile):
-        with open(RoomListFile, 'rb') as roomListFileRb:
-            roomList = pickle.load(roomListFileRb)
-        roomList.append(newRoomName)
-        with open(RoomListFile, 'wb') as roomListFileWb:
-            pickle.dump(roomList, roomListFileWb)
-    else:
-        with open(RoomListFile, 'wb') as roomListFileWb:
-            roomList = [newRoomName]
-            pickle.dump(roomList, roomListFileWb)
+    roomList = getRoomListFromFile()
+    roomList.append(buildNewRoomContentDict(roomName))
+    saveRoomListToFile(roomList)
 
-    return getRoomList()
+    return getRoomJsonList()
 
 
 def deleteRoom(roomName):
@@ -49,42 +38,55 @@ def deleteRoom(roomName):
     and delete the folder of the room
     '''
     if os.path.exists(ROOM_PATH + roomName) is False:
-        return 'Room not exists.'
+        #return 'Room not exists.'
+        return getRoomJsonList()
     shutil.rmtree(ROOM_PATH + roomName)
-    RoomListFile = ROOM_PATH + '.roomListFile.pkl'
     try:
-        if os.path.exists(RoomListFile):
-            with open(RoomListFile, 'rb') as roomListFileRb:
-                roomList = pickle.load(roomListFileRb)
-            roomList.remove(roomName)
-            with open(RoomListFile, 'wb') as roomListFileWb:
-                pickle.dump(roomList, roomListFileWb)
-        else:
-            with open(RoomListFile, 'wb') as roomListFileWb:
-                roomList = []
-                pickle.dump(roomList, roomListFileWb)
+        roomList = getRoomListFromFile()
+        for index in len(roomList):
+            if roomList[index]['name'] == roomName:
+                del roomList[index]
+                break
+        saveRoomListToFile(roomList)
     except Exception:
-        pass
-    return getRoomList()
+        print('delete room error')
+    return getRoomJsonList()
 
 
-def getRoomList():
+def getRoomJsonList():
+    roomList = getRoomListFromFile()
+    return json.dumps(roomList)
+
+
+def getRoomListFromFile():
     ''' get room list form .roomListFile.pkl'''
-    roomJsonList = []
-
-    if os.path.exists(ROOM_PATH + '.roomListFile.pkl'):
-        with open(ROOM_PATH + '.roomListFile.pkl', 'rb') as roomListFileRb:
-            roomList = pickle.load(roomListFileRb)
-            for room in roomList:
-                roomJsonList.append(buildRoomDict(room))
-    else:
-        with open(ROOM_PATH + '.roomListFile.pkl', 'wb') as roomListFileWb:
-            pickle.dump(roomJsonList, roomListFileWb)
-    return json.dumps(roomJsonList)
+    if os.path.exists(ROOM_PATH + '.roomListFile.pkl') is False:
+        saveRoomListToFile([])
+    with open(ROOM_PATH + '.roomListFile.pkl', 'rb') as roomListFileRb:
+        roomList = pickle.load(roomListFileRb)
+    return roomList
 
 
-def buildRoomDict(roomName):
-    '''buildRoomDict for roomlist'''
+def saveRoomListToFile(roomList):
+    with open(RoomListFile, 'wb') as roomListFileWb:
+        pickle.dump(roomList, roomListFileWb)
+
+
+def getRoomContentFromFile(roomName):
+    roomContentFile = ROOM_PATH + roomName + '/.roomContentFile.pkl'
+    if os.path.exists(roomContentFile) is False:
+        saveRoomContentToFile(buildNewRoomContentDict(roomName))
+    with open(roomContentFile, 'rb') as roomContentFileRb:
+        roomContent = pickle.load(roomContentFileRb)
+
+    return roomContent
+
+def saveRoomContentToFile(roomContent):
+    with open(ROOM_PATH + roomContent['name'] + '/.roomContentFile.pkl', 'wb') as roomContentFileWb:
+        pickle.dump(roomContent, roomContentFileWb)
+
+def buildNewRoomContentDict(roomName):
+    '''build a room content by using blueprint'''
     roomDict = {"name": roomName,
                 "updateTime": STANDARD_INITIAL_TIME,
                 "devices": []}
