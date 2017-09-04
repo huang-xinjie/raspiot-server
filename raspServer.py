@@ -21,6 +21,8 @@ if __name__ == '__main__':
                 cmdParser(conn, recvdata)
             elif recvdata['identity'] == 'device':
                 iotManager.setupIotServer(conn, recvdata)
-        except Exception:
-            pass
+        except KeyError:
+            print('Key: identity, not found')
+        except Exception as reason:
+            print('Error: ' + str(reason))
     s.close()
