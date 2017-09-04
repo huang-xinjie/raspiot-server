@@ -1,11 +1,11 @@
 import json
 import socket  
 from CmdParser import cmdParser
-from IoTManager import IotHandlerThread
-
-BUFFSIZE = 1024
+from IoTManager import IotManager
+from GlobalConstant import BUFFSIZE
 
 if __name__ == '__main__':
+    iotManager = IotManager()
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(("0.0.0.0", 22223))
     s.listen(5)
@@ -20,7 +20,7 @@ if __name__ == '__main__':
             if recvdata['identity'] == 'app':
                 cmdParser(conn, recvdata)
             elif recvdata['identity'] == 'device':
-                IotHandlerThread(conn, recvdata).start()
+                iotManager.setupIotServer(conn, recvdata)
         except Exception:
             pass
     s.close()

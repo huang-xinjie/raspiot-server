@@ -1,28 +1,44 @@
 import os
-import time
 import json
+import pickle
 import shutil
-import socket
 import threading
+from GlobalConstant import ROOM_PATH, RoomListFile
 
-BUFFSIZE = 1024
+
 iotServerList = []
 
 
-class IotHandlerThread(threading.Thread):
-    def __init__(self, conn, recvdata):
-        threading.Thread.__init__(self)
-        self.conn = conn
-        self.recvdata = recvdata
+class IotManager:
+    '''IotManager
+        Manage IotServer and IotDevice
+        Including access IotDevice and setup IotServer
+    '''
+    roomList = []
 
-    def run(self):
-        self.IotServerSetup(self.conn, self.recvdata)
+    def __init__(self):
+        if os.path.exists(RoomListFile):
+            with open(RoomListFile, 'rb') as roomListFileRb:
+                self.roomList = pickle.load(roomListFileRb)
+            for roomName in self.roomList:
+                room = ROOM_PATH + roomName
+                with open(room+'/.deviceListFile.pkl', 'wb') as roomContentFile:
+                    roomContent = pickle.load(roomContentFile)
+                    exec('self.' + roomName + ' = ' + roomContent)
+                    for device in roomContent['devices']:
+                        exec('self.' + roomName + '["devices"]')
 
-    def IotServerSetup(self, conn, recvdata):
+
+    def setupIotServer(self, conn, recvdata):
+        ''' Setup IotServer in a new thread '''
+        threading.Thread(target=self.IotServerSetter, args=(conn, recvdata))
+
+    def IotServerSetter(self, conn, recvdata):
+        ''' setup IotServer and add it to iotServerList '''
         ip = recvdata['ip']
         mac = recvdata['mac']
         module = recvdata['iotServer']
-        
+
         try:
             if os.path.exists('IotServer/' + module + '.py') is False:
                 shutil.copyfile('Repository/' + module +'.py', 'IotServer/' + module + '.py')

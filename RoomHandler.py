@@ -8,8 +8,7 @@ import os
 import json
 import pickle
 import shutil
-ROOM_PATH = 'Rooms/'
-STANDARD_INITIAL_TIME = "2015-12-17 22:22:00"
+from GlobalConstant import *
 
 
 
@@ -29,7 +28,7 @@ def addRoom(newRoomName):
         pickle.dump(buildRoomDict(newRoomName), deviceListFile)
 
     # Add new room information to .roomListFile
-    RoomListFile = ROOM_PATH + '.roomListFile.pkl'
+    
     if os.path.exists(RoomListFile):
         with open(RoomListFile, 'rb') as roomListFileRb:
             roomList = pickle.load(roomListFileRb)
