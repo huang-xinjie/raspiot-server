@@ -1,7 +1,7 @@
 import json
 import socket  
 from CmdParser import cmdParser
-from IoTManager import IotManager
+from IotManager import IotManager
 from GlobalConstant import BUFFSIZE
 
 if __name__ == '__main__':
