@@ -29,8 +29,8 @@ class IotManager:
         self.roomContentList.append(roomContent)
         for index in range(len(roomContent['devices'])):
             roomContent['devices'][index]['status'] = False
-        # use every different room name to build variable
-        exec('self.' + roomName + 'RoomContent = ' + roomContent)
+        # use every different room name to build variable   format: _roomname_RoomContent
+        exec('self._' + roomName + '_RoomContent = roomContent')
 
 
 
