@@ -43,13 +43,13 @@ def deleteRoom(roomName):
     shutil.rmtree(ROOM_PATH + roomName)
     try:
         roomList = getRoomListFromFile()
-        for index in len(roomList):
+        for index in range(len(roomList)):
             if roomList[index]['name'] == roomName:
                 del roomList[index]
                 break
         saveRoomListToFile(roomList)
-    except Exception:
-        print('delete room error')
+    except Exception as reason:
+        print('delete room error: ' + str(reason))
     return getRoomJsonList()
 
 
