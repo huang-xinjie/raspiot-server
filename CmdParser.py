@@ -13,7 +13,7 @@ def	getCommand(conn, target, value):
     if target == 'server' and value == 'checkServices':
         conn.sendall("Server is ready".encode())
     elif target == 'room' and value == 'roomlist':
-        conn.sendall(RoomHandler.getRoomList().encode())
+        conn.sendall(RoomHandler.getRoomJsonList().encode())
     elif target.split(':')[0] == 'device' and value == 'devicelist':
         sendJson = buildJSON(target.split(':')[1])
         conn.sendall(sendJson.encode())
@@ -25,6 +25,7 @@ def addCommand(conn, target, value):
         conn.sendall( RoomHandler.addRoom(value).encode())
     elif target.split(':')[0] == 'device':
         pass
+    print("Finished")
     conn.close()
 
 def delCommand(conn, target, value):
@@ -33,6 +34,7 @@ def delCommand(conn, target, value):
     elif target.split(':')[0] == 'device':
         roomName = target.split(':')[1]
         deviceName = value
+    print("Finished.")
     conn.close()
 
 
