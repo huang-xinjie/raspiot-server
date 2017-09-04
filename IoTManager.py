@@ -1,12 +1,11 @@
 import os
 import json
+import time
 import pickle
 import shutil
 import threading
-from GlobalConstant import ROOM_PATH, RoomListFile
-
-
-iotServerList = []
+from GlobalConstant import RoomListFile
+from RoomHandler import getRoomListFromFile, saveRoomListToFile, saveRoomContentToFile, getRoomContentFromFile
 
 
 class IotManager:
@@ -14,24 +13,31 @@ class IotManager:
         Manage IotServer and IotDevice
         Including access IotDevice and setup IotServer
     '''
-    roomList = []
+
+    roomList = list()
+    roomContentList = list()
 
     def __init__(self):
-        if os.path.exists(RoomListFile):
-            with open(RoomListFile, 'rb') as roomListFileRb:
-                self.roomList = pickle.load(roomListFileRb)
-            for roomName in self.roomList:
-                room = ROOM_PATH + roomName
-                with open(room+'/.deviceListFile.pkl', 'wb') as roomContentFile:
-                    roomContent = pickle.load(roomContentFile)
-                    exec('self.' + roomName + ' = ' + roomContent)
-                    for device in roomContent['devices']:
-                        exec('self.' + roomName + '["devices"]')
+        self.roomList = getRoomListFromFile()
+        for room in self.roomList:
+            self.buildRoomContentVariable(room['name'])
+        threading.Thread(target=self.saveRoomListAndRoomContentToFileAtRegularTime, args=None)
+
+    def buildRoomContentVariable(self, roomName):
+        ''' Get room content from folder and build variable '''
+        roomContent = getRoomContentFromFile(roomName)
+        self.roomContentList.append(roomContent)
+        for index in range(len(roomContent['devices'])):
+            roomContent['devices'][index]['status'] = False
+        # use every different room name to build variable
+        exec('self.' + roomName + 'RoomContent = ' + roomContent)
+
 
 
     def setupIotServer(self, conn, recvdata):
         ''' Setup IotServer in a new thread '''
         threading.Thread(target=self.IotServerSetter, args=(conn, recvdata))
+        
 
     def IotServerSetter(self, conn, recvdata):
         ''' setup IotServer and add it to iotServerList '''
@@ -49,3 +55,17 @@ class IotManager:
             #exec('print(iotServerList[0].' + iotServerList[0].buildDeviceJSON()['deviceContent'][0]['getter'] + ')')
         except Exception:
             print('Something error')
+
+    
+    def saveRoomListAndRoomContentToFileAtRegularTime(self):
+        ''' save room list and room content to file at regular time '''
+        while True:
+            # hold it for five minutes
+            time.sleep(5 * 60)
+            # save room list
+            saveRoomListToFile(self.roomList)
+            # remove device's status before save
+            for roomContent in self.roomContentList:
+                for index in range(len(roomContent['devices'])):
+                    roomContent['devices'][index].pop('status')
+                saveRoomContentToFile(roomContent)   
