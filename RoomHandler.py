@@ -8,8 +8,11 @@ import os
 import json
 import pickle
 import shutil
-from IotManager import IotManager
 from GlobalConstant import ROOM_PATH, RoomListFile, STANDARD_INITIAL_TIME
+from IotManager import IotManager
+from IotManager import getRoomListFromIotManager
+from IotManager import deleteRoomInIotManager
+from IotManager import addRoomtoIotManager
 
 
 
@@ -25,9 +28,8 @@ def addRoom(roomName):
     # Add new folder and initial
     os.makedirs(ROOM_PATH + roomName)
     saveRoomContentToFile(buildNewRoomContentDict(roomName))
-    # Add new room information to .roomListFile
-    roomList = getRoomListFromFile()
-    roomList.append(buildNewRoomContentDict(roomName))
+    # Add new room information to IotManager.roomList
+    roomList = addRoomtoIotManager(buildNewRoomContentDict(roomName))
     saveRoomListToFile(roomList)
 
     return getRoomJsonList()
@@ -41,23 +43,16 @@ def deleteRoom(roomName):
     if os.path.exists(ROOM_PATH + roomName) is False:
         #return 'Room not exists.'
         return getRoomJsonList()
+    # delete the folder of the room
     shutil.rmtree(ROOM_PATH + roomName)
-    try:
-        roomList = getRoomListFromFile()
-        for index in range(len(roomList)):
-            if roomList[index]['name'] == roomName:
-                del roomList[index]
-                break
-        saveRoomListToFile(roomList)
-    except Exception as reason:
-        print(__file__ + ' delete room error: ' + str(reason))
+    deleteRoomInIotManager(roomName)
     return getRoomJsonList()
 
 
 def getRoomJsonList():
     ''' get room list which dumps by json'''
     # get lastest room list from IotManager
-    roomList = IotManager.roomList
+    roomList = getRoomListFromIotManager()
     return json.dumps(roomList)
 
 
@@ -91,7 +86,7 @@ def saveRoomContentToFile(roomContent):
         pickle.dump(roomContent, roomContentFileWb)
 
 def buildNewRoomContentDict(roomName):
-    '''build a room content by using blueprint'''
+    ''' build a room content by room content blueprint '''
     roomDict = {"name": roomName,
                 "updateTime": STANDARD_INITIAL_TIME,
                 "devices": []}
