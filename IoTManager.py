@@ -19,23 +19,33 @@ class IotManager:
     '''
 
     roomList = list()
+    devicesUuidMapRoom = {}
     roomContentList = list()
 
     def __init__(self):
         self.roomList = getRoomListFromFile()
         for room in self.roomList:
             self.buildRoomContentVariable(room['name'])
-        threading.Thread(target=self.saveRoomListAndRoomContentToFileAtRegularTime, args=None)
+        threading.Thread(self.saveRoomListAndRoomContentToFileAtRegularTime, None)
+
 
     def buildRoomContentVariable(self, roomName):
         ''' Get room content from folder and build variable '''
         roomContent = getRoomContentFromFile(roomName)
         self.roomContentList.append(roomContent)
+        devicesUuid = []
         for index in range(len(roomContent['devices'])):
             roomContent['devices'][index]['status'] = False
-        # use every different room name to build variable   format: _roomname_RoomContent
-        setattr(self, '_' + roomName + '_RoomContent', roomContent)
+            # using uuid to map room, make room search faster 
+            self.devicesUuidMapRoom[roomContent['devices'][index]['uuid']] = roomName
+        # use every different room name to build variable
+        # format: _roomname_RoomContent
+        setattr(self, self.buildRoomVariableName(roomName), roomContent)
 
+
+    def buildRoomVariableName(self, roomName):
+        '''   format: _roomname_RoomContent '''
+        return '_' + roomName + '_RoomContent'
 
 
     def setupIotServer(self, conn, recvdata):
@@ -48,7 +58,6 @@ class IotManager:
         ip = recvdata['ip']
         mac = recvdata['mac']
         moduleName = className = recvdata['iotServer']
-
         try:
             if os.path.exists('IotServer/' + moduleName + '.py') is False:
                 shutil.copyfile('Repository/' + moduleName + '.py', 'IotServer/' + moduleName + '.py')
@@ -58,6 +67,8 @@ class IotManager:
             iotServerClass = getattr(iotServerModule, className)
             # instantiation
             iotServer = iotServerClass(ip, mac)
+            # search which room it's belong to
+
 
             conn.sendall(json.dumps({'response':'Setup completed'}).encode())
             #exec('print(iotServerList[0].' + iotServerList[0].buildDeviceJSON()['deviceContent'][0]['getter'] + ')')
@@ -68,12 +79,27 @@ class IotManager:
     def saveRoomListAndRoomContentToFileAtRegularTime(self):
         ''' save room list and room content to file at regular time '''
         while True:
-            # hold it for five minutes
-            time.sleep(5 * 60)
+            # hold it for three minutes
+            time.sleep(3 * 60)
             # save room list
             saveRoomListToFile(self.roomList)
             # remove device's status before save
             for roomContent in self.roomContentList:
-                for index in range(len(roomContent['devices'])):
-                    roomContent['devices'][index].pop('status')
                 saveRoomContentToFile(roomContent)
+
+def addRoomtoIotManager(roomDict):
+    IotManager.roomList.append(roomDict)
+    return IotManager.roomList
+
+
+def getRoomListFromIotManager():
+    ''' get room list from IotManager.roomList '''
+    return IotManager.roomList
+
+def deleteRoomInIotManager(roomName):
+    ''' delete room in IotManager.roomList '''
+    roomList = getRoomListFromIotManager()
+    for index in range(len(roomList)):
+        if roomList[index]['name'] == roomName:
+            del roomList[index]
+            break
