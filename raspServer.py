@@ -7,7 +7,7 @@ from GlobalConstant import BUFFSIZE
 if __name__ == '__main__':
     iotManager = IotManager()
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind(("0.0.0.0", 22223))
+    s.bind(("0.0.0.0", 22015))
     s.listen(5)
 
     while True:
@@ -24,5 +24,5 @@ if __name__ == '__main__':
         except KeyError:
             print('Key: identity, not found')
         except Exception as reason:
-            print('Error: ' + str(reason))
+            print(__file__ +' Error: ' + str(reason))
     s.close()
