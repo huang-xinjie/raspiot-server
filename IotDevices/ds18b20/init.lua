@@ -27,7 +27,8 @@ end
 
 function sayHelloToManager(json)
     srv = net.createConnection(net.TCP, 0)
-    srv:connect(22223, "192.168.1.242")
+    -- default manager port and ip
+    srv:connect(22015, "192.168.17.1")
     srv:send(json)
     srv:on("receive", function(sck, c) 
         print(c) 
