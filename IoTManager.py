@@ -1,15 +1,19 @@
+'''IotManager.py
+    Manage IotServer and IotDevice
+    Including access IotDevice and setup IotServer
+'''
+
 import os
 import json
 import time
-import pickle
 import shutil
+import importlib
 import threading
-from GlobalConstant import RoomListFile
 from RoomHandler import getRoomListFromFile, saveRoomListToFile, saveRoomContentToFile, getRoomContentFromFile
 
 
 class IotManager:
-    '''IotManager
+    '''IotManager.class
         Manage IotServer and IotDevice
         Including access IotDevice and setup IotServer
     '''
@@ -30,31 +34,35 @@ class IotManager:
         for index in range(len(roomContent['devices'])):
             roomContent['devices'][index]['status'] = False
         # use every different room name to build variable   format: _roomname_RoomContent
-        exec('self._' + roomName + '_RoomContent = roomContent')
+        setattr(self, '_' + roomName + '_RoomContent', roomContent)
 
 
 
     def setupIotServer(self, conn, recvdata):
         ''' Setup IotServer in a new thread '''
         threading.Thread(target=self.IotServerSetter, args=(conn, recvdata))
-        
+
 
     def IotServerSetter(self, conn, recvdata):
         ''' setup IotServer and add it to iotServerList '''
         ip = recvdata['ip']
         mac = recvdata['mac']
-        module = recvdata['iotServer']
+        moduleName = className = recvdata['iotServer']
 
         try:
-            if os.path.exists('IotServer/' + module + '.py') is False:
-                shutil.copyfile('Repository/' + module +'.py', 'IotServer/' + module + '.py')
-            exec('from IotServer import ' + module)
-            exec('iotServer = ' + module + '.' + module + '("' + ip + '", "'+ mac + '")')
-            exec('iotServerList.append(iotServer)')
+            if os.path.exists('IotServer/' + moduleName + '.py') is False:
+                shutil.copyfile('Repository/' + moduleName + '.py', 'IotServer/' + moduleName + '.py')
+            # import module from IotServer/
+            iotServerModule = importlib.import_module('IotServer.' + moduleName)
+            # import class from module
+            iotServerClass = getattr(iotServerModule, className)
+            # instantiation
+            iotServer = iotServerClass(ip, mac)
+
             conn.sendall(json.dumps({'response':'Setup completed'}).encode())
             #exec('print(iotServerList[0].' + iotServerList[0].buildDeviceJSON()['deviceContent'][0]['getter'] + ')')
-        except Exception:
-            print('Something error')
+        except Exception as reason:
+            print(__file__ +' Error: ' + str(reason))
 
     
     def saveRoomListAndRoomContentToFileAtRegularTime(self):
@@ -68,4 +76,4 @@ class IotManager:
             for roomContent in self.roomContentList:
                 for index in range(len(roomContent['devices'])):
                     roomContent['devices'][index].pop('status')
-                saveRoomContentToFile(roomContent)   
+                saveRoomContentToFile(roomContent)
