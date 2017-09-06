@@ -9,6 +9,7 @@ import time
 import shutil
 import importlib
 import threading
+from Kernel.RoomHandler import RoomHandler
 from Kernel.FileHandler import saveRoomListToFile
 from Kernel.FileHandler import getRoomListFromFile
 from Kernel.FileHandler import saveRoomContentToFile
@@ -39,7 +40,7 @@ class IotManager:
         devicesUuid = []
         for index in range(len(roomContent['devices'])):
             roomContent['devices'][index]['status'] = False
-            # using uuid to map room, make room search faster 
+            # using uuid to map room, make room search faster
             self.devicesUuidMapRoom[roomContent['devices'][index]['uuid']] = roomName
         # use every different room name to build variable
         # format: _roomname_RoomContent
@@ -50,6 +51,10 @@ class IotManager:
         '''   format: _roomname_RoomContent '''
         return '_' + roomName + '_RoomContent'
 
+
+    def setRoomHandler(self):
+        ''' set a room handler for iotManager '''
+        self.roomHandler = RoomHandler(self)
 
     def setupIotServer(self, conn, recvdata):
         ''' Setup IotServer in a new thread '''
@@ -78,7 +83,12 @@ class IotManager:
         except Exception as reason:
             print(__file__ +' Error: ' + str(reason))
 
-    
+    def getRoomList(self):
+        return self.roomList
+
+    def getRoomHandler(self):
+        return self.roomHandler
+
     def saveRoomListAndRoomContentToFileRegularly(self):
         ''' save room list and room content to file at regular time '''
         while True:
@@ -89,21 +99,3 @@ class IotManager:
             # remove device's status before save
             for roomContent in self.roomContentList:
                 saveRoomContentToFile(roomContent)
-
-def addRoomtoIotManager(roomDict):
-    IotManager.roomList.append(roomDict)
-    return IotManager.roomList
-
-
-def getRoomListFromIotManager():
-    ''' get room list from IotManager.roomList '''
-    return IotManager.roomList
-
-def deleteRoomInIotManager(roomName):
-    ''' delete room in IotManager.roomList '''
-    roomList = getRoomListFromIotManager()
-    for index in range(len(roomList)):
-        if roomList[index]['name'] == roomName:
-            del roomList[index]
-            break
-    return roomList
