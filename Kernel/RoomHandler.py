@@ -7,13 +7,13 @@ build roomDict
 import os
 import json
 import shutil
-from GlobalConstant import ROOM_PATH
-from IotManager import addRoomtoIotManager
-from IotManager import deleteRoomInIotManager
-from IotManager import getRoomListFromIotManager
-from FileHandler import buildNewRoomContentDict
-from FileHandler import saveRoomContentToFile
-from FileHandler import saveRoomListToFile
+from Kernel.GlobalConstant import ROOM_PATH
+from Kernel.IotManager import addRoomtoIotManager
+from Kernel.IotManager import deleteRoomInIotManager
+from Kernel.IotManager import getRoomListFromIotManager
+from Kernel.FileHandler import buildNewRoomContentDict
+from Kernel.FileHandler import saveRoomContentToFile
+from Kernel.FileHandler import saveRoomListToFile
 
 
 def addRoom(roomName):

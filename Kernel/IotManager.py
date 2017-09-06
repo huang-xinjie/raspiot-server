@@ -9,10 +9,10 @@ import time
 import shutil
 import importlib
 import threading
-from FileHandler import saveRoomListToFile
-from FileHandler import getRoomListFromFile
-from FileHandler import saveRoomContentToFile
-from FileHandler import getRoomContentFromFile
+from Kernel.FileHandler import saveRoomListToFile
+from Kernel.FileHandler import getRoomListFromFile
+from Kernel.FileHandler import saveRoomContentToFile
+from Kernel.FileHandler import getRoomContentFromFile
 
 
 class IotManager:

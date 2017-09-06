@@ -6,7 +6,7 @@
 BUFFSIZE = 1024
 
 # Room path
-ROOM_PATH = '../Rooms/'
+ROOM_PATH = 'Rooms/'
 
 # raspIot standard initial time
 STANDARD_INITIAL_TIME = "2015-12-17 22:22:00"

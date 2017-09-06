@@ -1,9 +1,9 @@
 
 import os
 import pickle
-from GlobalConstant import ROOM_PATH
-from GlobalConstant import RoomListFile
-from GlobalConstant import STANDARD_INITIAL_TIME
+from Kernel.GlobalConstant import ROOM_PATH
+from Kernel.GlobalConstant import RoomListFile
+from Kernel.GlobalConstant import STANDARD_INITIAL_TIME
 
 def getRoomListFromFile():
     ''' get room list form .roomListFile.pkl '''

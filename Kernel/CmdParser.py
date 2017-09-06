@@ -3,7 +3,7 @@ Parser cmd that from app
 '''
 import json
 import datetime
-import RoomHandler
+import Kernel.RoomHandler as RoomHandler
 
 def setCommand(conn, target, value):
     pass
