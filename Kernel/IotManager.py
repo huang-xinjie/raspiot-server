@@ -9,7 +9,10 @@ import time
 import shutil
 import importlib
 import threading
-from RoomHandler import getRoomListFromFile, saveRoomListToFile, saveRoomContentToFile, getRoomContentFromFile
+from FileHandler import saveRoomListToFile
+from FileHandler import getRoomListFromFile
+from FileHandler import saveRoomContentToFile
+from FileHandler import getRoomContentFromFile
 
 
 class IotManager:
@@ -26,7 +29,7 @@ class IotManager:
         self.roomList = getRoomListFromFile()
         for room in self.roomList:
             self.buildRoomContentVariable(room['name'])
-        threading.Thread(self.saveRoomListAndRoomContentToFileAtRegularTime, None)
+        threading.Thread(target=self.saveRoomListAndRoomContentToFileRegularly, args=()).start()
 
 
     def buildRoomContentVariable(self, roomName):
@@ -50,7 +53,7 @@ class IotManager:
 
     def setupIotServer(self, conn, recvdata):
         ''' Setup IotServer in a new thread '''
-        threading.Thread(target=self.IotServerSetter, args=(conn, recvdata))
+        threading.Thread(target=self.IotServerSetter, args=(conn, recvdata)).start()
 
 
     def IotServerSetter(self, conn, recvdata):
@@ -71,12 +74,12 @@ class IotManager:
 
 
             conn.sendall(json.dumps({'response':'Setup completed'}).encode())
-            #exec('print(iotServerList[0].' + iotServerList[0].buildDeviceJSON()['deviceContent'][0]['getter'] + ')')
+            # exec('print(iotServerList[0].' + iotServerList[0].buildDeviceJSON()['deviceContent'][0]['getter'] + ')')
         except Exception as reason:
             print(__file__ +' Error: ' + str(reason))
 
     
-    def saveRoomListAndRoomContentToFileAtRegularTime(self):
+    def saveRoomListAndRoomContentToFileRegularly(self):
         ''' save room list and room content to file at regular time '''
         while True:
             # hold it for three minutes
@@ -103,3 +106,4 @@ def deleteRoomInIotManager(roomName):
         if roomList[index]['name'] == roomName:
             del roomList[index]
             break
+    return roomList

@@ -1,8 +1,8 @@
 import json
 import socket  
-from CmdParser import cmdParser
-from IotManager import IotManager
-from GlobalConstant import BUFFSIZE
+from Kernel.CmdParser import cmdParser
+from Kernel.IotManager import IotManager
+from Kernel.GlobalConstant import BUFFSIZE
 
 if __name__ == '__main__':
     iotManager = IotManager()
