@@ -1,11 +1,11 @@
 import json
-import socket  
-from Kernel.CmdParser import cmdParser
+import socket
 from Kernel.IotManager import IotManager
 from Kernel.GlobalConstant import BUFFSIZE
 
 if __name__ == '__main__':
     iotManager = IotManager()
+    cmdParser = iotManager.getCmdParser()
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(("0.0.0.0", 22015))
     s.listen(5)
@@ -17,12 +17,7 @@ if __name__ == '__main__':
         print(recvJson)
         try:
             recvdata = json.loads(recvJson)
-            if recvdata['identity'] == 'app':
-                cmdParser(conn, recvdata)
-            elif recvdata['identity'] == 'device':
-                iotManager.setupIotServer(conn, recvdata)
-        except KeyError:
-            print('Key: identity, not found')
+            cmdParser.commandParser(conn, recvdata)
         except Exception as reason:
             print(__file__ +' Error: ' + str(reason))
     s.close()

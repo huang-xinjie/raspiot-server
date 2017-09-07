@@ -3,52 +3,63 @@ Parser cmd that from app
 '''
 import json
 import datetime
-import Kernel.RoomHandler as RoomHandler
 
-def setCommand(conn, target, value):
-    pass
+class CmdParser:
+    def __init__(self, iotManager):
+        self.IotManager = iotManager
 
-
-def	getCommand(conn, target, value):
-    if target == 'server' and value == 'checkServices':
-        conn.sendall("Server is ready".encode())
-    elif target == 'room' and value == 'roomlist':
-        conn.sendall(RoomHandler.getRoomJsonList().encode())
-    elif target.split(':')[0] == 'device' and value == 'devicelist':
-        sendJson = buildJSON(target.split(':')[1])
-        conn.sendall(sendJson.encode())
-    print("Finished.")
-    conn.close()
-
-def addCommand(conn, target, value):
-    if target.split(':')[0] == 'room':
-        conn.sendall( RoomHandler.addRoom(value).encode())
-    elif target.split(':')[0] == 'device':
+    def setCommand(self, conn, target, value):
         pass
-    print("Finished")
-    conn.close()
-
-def delCommand(conn, target, value):
-    if target.split(':')[0] == 'room':
-        conn.sendall(RoomHandler.deleteRoom(value).encode())
-    elif target.split(':')[0] == 'device':
-        roomName = target.split(':')[1]
-        deviceName = value
-    print("Finished.")
-    conn.close()
 
 
-def cmdParser(conn, command):
-    # cmd, target, value = json.loads(Json) #以免json的Key顺序乱了，不够保险
-    cmd, target, value = command['cmd'], command['target'], command['value']
-    if cmd == "get":
-        getCommand(conn, target, value)
-    elif cmd == 'set':
-        setCommand(conn, target, value)
-    elif cmd == 'add':
-        addCommand(conn, target, value)
-    elif cmd == 'del':
-        delCommand(conn, target, value)
+    def	getCommand(self, conn, target, value):
+        if target == 'server' and value == 'checkServices':
+            conn.sendall("Server is ready".encode())
+        elif target == 'room' and value == 'roomlist':
+            roomHandler = self.IotManager.getRoomHandler()
+            conn.sendall(roomHandler.getRoomJsonList().encode())
+        elif target.split(':')[0] == 'device' and value == 'devicelist':
+            sendJson = buildJSON(target.split(':')[1])
+            conn.sendall(sendJson.encode())
+        print("Finished.")
+        conn.close()
+
+    def addCommand(self, conn, target, value):
+        if target.split(':')[0] == 'room':
+            roomHandler = self.IotManager.getRoomHandler()
+            conn.sendall(roomHandler.addRoom(value).encode())
+        elif target.split(':')[0] == 'device':
+            pass
+        print("Finished")
+        conn.close()
+
+    def delCommand(self, conn, target, value):
+        if target.split(':')[0] == 'room':
+            roomHandler = self.IotManager.getRoomHandler()
+            conn.sendall(roomHandler.deleteRoom(value).encode())
+        elif target.split(':')[0] == 'device':
+            roomName = target.split(':')[1]
+            deviceName = value
+        print("Finished.")
+        conn.close()
+
+
+    def commandParser(self, conn, recvdata):
+
+        if recvdata['identity'] == 'app':
+            command = recvdata
+            # cmd, target, value = json.loads(Json) #以免json的Key顺序乱了，不够保险
+            cmd, target, value = command['cmd'], command['target'], command['value']
+            if cmd == "get":
+                self.getCommand(conn, target, value)
+            elif cmd == 'set':
+                self.setCommand(conn, target, value)
+            elif cmd == 'add':
+                self.addCommand(conn, target, value)
+            elif cmd == 'del':
+                self.delCommand(conn, target, value)
+        elif recvdata['identity'] == 'device':
+            self.IotManager.setupIotServer(conn, recvdata)
 
 
 def buildJSON(roomName):
