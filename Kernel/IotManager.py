@@ -5,16 +5,12 @@
 
 import os
 import json
-import time
 import shutil
 import importlib
 import threading
 from Kernel.CmdParser import CmdParser
 from Kernel.RoomHandler import RoomHandler
-from Kernel.FileHandler import saveRoomListToFile
-from Kernel.FileHandler import getRoomListFromFile
-from Kernel.FileHandler import saveRoomContentToFile
-from Kernel.FileHandler import getRoomContentFromFile
+from Kernel.DeviceHandler import DeviceHandler
 
 
 class IotManager:
@@ -22,54 +18,35 @@ class IotManager:
         Manage IotServer and IotDevice
         Including access IotDevice and setup IotServer
     '''
-
-    roomList = list()
     devicesUuidMapRoom = dict()
-    roomContentListDict = dict()
 
     def __init__(self):
         # set a cmdParser for iotManager
         self.cmdParser = CmdParser(self)
         # set a roomHandler for iotManager
-        self.roomHandler = RoomHandler(self)
-        self.roomList = getRoomListFromFile()
-        for room in self.roomList:
-            self.buildRoomContentVariable(room['name'])
-        threading.Thread(target=self.saveRoomListAndRoomContentToFileRegularly, args=()).start()
+        self.roomHandler = RoomHandler()
+        roomContentList = list(self.roomHandler.getRoomContentListDict().values())
+        for roomContent in roomContentList:
+            for index in range(len(roomContent)):
+                # using uuid to map room, make room search faster
+                deviceUuid = roomContent['devices'][index]['uuid']
+                self.devicesUuidMapRoom[deviceUuid] = roomContent['name']
+        # set a deviceHandler for iotManager
+        self.deviceHandler = DeviceHandler(self)
 
 
-    def buildRoomContentVariable(self, roomName):
-        ''' Get room content from folder and build variable '''
-        roomContent = getRoomContentFromFile(roomName)
-        # All room content in roomContentList
-        self.roomContentListDict[roomName] = roomContent
-        for index in range(len(roomContent['devices'])):
-            roomContent['devices'][index]['status'] = False
-            # using uuid to map room, make room search faster
-            deviceUuid = roomContent['devices'][index]['uuid']
-            self.devicesUuidMapRoom[deviceUuid] = roomName
-
-        # use every different room name to build variable
-        # format: _roomname_RoomContent
-        # setattr(self, self.buildRoomVariableName(roomName), roomContent)
-
-
-    # def buildRoomVariableName(self, roomName):
-    #    ''' format: _roomname_RoomContent '''
-    #    return '_' + roomName + '_RoomContent'
-
-
-    def getRoomList(self):
-        ''' room list getter '''
-        return self.roomList
+    def getCmdParser(self):
+        ''' cmd parser getter '''
+        return self.cmdParser
 
     def getRoomHandler(self):
         ''' room handler getter '''
         return self.roomHandler
 
-    def getCmdParser(self):
-        ''' cmd parser getter '''
-        return self.cmdParser
+    def getDeviceHandler(self):
+        ''' device handler getter '''
+        return self.deviceHandler
+
 
     def setupIotServer(self, conn, recvdata):
         ''' Setup IotServer in a new thread '''
@@ -92,28 +69,19 @@ class IotManager:
             iotServerClass = getattr(iotServerModule, className)
             # instantiation
             iotServer = iotServerClass(ip, mac)
+
+            conn.sendall(json.dumps({'response':'Setup completed'}).encode())
+
             # search which room it's belong to
             roomName = self.devicesUuidMapRoom['uuid']
             # set status of this iotServer True
-
+            '''
             for index in range(len(self.roomContentListDict[roomName]['devices'])):
                 if self.roomContentListDict[roomName][index]['uuid'] == mac:
                     self.roomContentListDict[roomName][index]['status'] = True
                     break
-
+            '''
             conn.sendall(json.dumps({'response':'Setup completed'}).encode())
             # exec('print(iotServerList[0].' + iotServerList[0].buildDeviceJSON()['deviceContent'][0]['getter'] + ')')
         except Exception as reason:
             print(__file__ +' Error: ' + str(reason))
-
-
-    def saveRoomListAndRoomContentToFileRegularly(self):
-        ''' save room list and room content to file at regular time '''
-        while True:
-            # hold it for three minutes
-            time.sleep(3 * 60)
-            # save room list
-            saveRoomListToFile(self.roomList)
-            # remove device's status before save
-            for roomContent in self.roomContentListDict:
-                saveRoomContentToFile(roomContent)
