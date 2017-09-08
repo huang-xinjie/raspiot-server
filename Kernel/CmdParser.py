@@ -11,32 +11,43 @@ class CmdParser:
         self.IotManager = iotManager
 
     def setCommand(self, conn, target, value):
-        pass
-
+        targetType, target = target.split(':')
+        if targetType == 'room':
+            pass
+        elif targetType == 'device':
+            pass
+        elif targetType == 'deviceContent':
+            roomName, deviceName, deviceContentName = target.split('/')
+            deviceHandler = self.IotManager.getDeviceHandler()
+            conn.sendall(deviceHandler.setDeviceContentToValue(roomName, deviceName, deviceContentName, value).encode())
+        print("Finished.")
+        conn.close()
 
     def	getCommand(self, conn, target, value):
-        if target == 'server' and value == 'checkServices':
+        targetType, target = target.split(':')
+        if targetType == 'server' and value == 'checkServices':
             conn.sendall("Server is ready".encode())
-        elif target == 'room' and value == 'roomlist':
+        elif targetType == 'room' and value == 'roomlist':
             roomHandler = self.IotManager.getRoomHandler()
             conn.sendall(roomHandler.getRoomJsonList().encode())
-        elif target.split(':')[0] == 'device' and value == 'devicelist':
-            sendJson = self.buildJSON(target.split(':')[1])
+        elif targetType == 'device' and value == 'devicelist':
+            sendJson = self.buildJSON(target)
             conn.sendall(sendJson.encode())
         print("Finished.")
         conn.close()
 
     def addCommand(self, conn, target, value):
-        if target.split(':')[0] == 'room':
+        targetType, target = target.split(':')
+        if targetType == 'room':
             roomHandler = self.IotManager.getRoomHandler()
             conn.sendall(roomHandler.addRoom(value).encode())
-        elif target.split(':')[0] == 'device':
+        elif targetType == 'device':
             deviceUuid = value
-            roomName, deviceName = target.split(':')[1].split('/')
+            roomName, deviceName = target.split('/')
             deviceDict = buildNewDeviceDict(deviceName, deviceUuid)
             deviceHandler = self.IotManager.getDeviceHandler()
             conn.sendall(deviceHandler.addDevice(roomName, deviceDict).encode())
-        print("Finished")
+        print("Finished.")
         conn.close()
 
     def delCommand(self, conn, target, value):
@@ -49,9 +60,7 @@ class CmdParser:
         print("Finished.")
         conn.close()
 
-
     def commandParser(self, conn, recvdata):
-
         if recvdata['identity'] == 'app':
             command = recvdata
             # cmd, target, value = json.loads(Json)
