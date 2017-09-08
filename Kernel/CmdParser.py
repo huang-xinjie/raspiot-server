@@ -1,6 +1,7 @@
 '''CmdParser.py
 Parser cmd that from app
 '''
+import copy
 import json
 import datetime
 from Kernel.DeviceHandler import buildNewDeviceDict
@@ -20,7 +21,7 @@ class CmdParser:
             roomHandler = self.IotManager.getRoomHandler()
             conn.sendall(roomHandler.getRoomJsonList().encode())
         elif target.split(':')[0] == 'device' and value == 'devicelist':
-            sendJson = buildJSON(target.split(':')[1])
+            sendJson = self.buildJSON(target.split(':')[1])
             conn.sendall(sendJson.encode())
         print("Finished.")
         conn.close()
@@ -68,43 +69,24 @@ class CmdParser:
             self.IotManager.deviceHandler.setupIotServer(conn, recvdata)
 
 
-def buildJSON(roomName):
-    deviceList = []
-    deviceContentList1 = [{"type":"switch", "name":"开关", "value":"false"}]
-    uuid1 = "28:E1:4C:BC:70:0B"
-    deviceName1 = "风扇"
-    device1 = {}
-    device1['name'] = deviceName1
-    device1['uuid'] = uuid1
-    device1['deviceContent'] = deviceContentList1
-    deviceList.append(device1)
+    def buildJSON(self, roomName):
+        deviceList = []
+        roomContent = copy.deepcopy(self.IotManager.roomHandler.getRoomContent(roomName))
+        for device in roomContent['devices']:
+            if device['status'] is True:
+                iotServer = self.IotManager.deviceHandler.onLineIotServerListDict[device['uuid']]
+                deviceAttribute = iotServer.getDeviceAttribute()
+                # pop key: 'getter' or 'setter'
+                for deviceContent in deviceAttribute['deviceContent']:
+                    if deviceContent.get('getter') is not None:
+                        deviceContent.pop('getter')
+                    elif deviceContent.get('setter') is not None:
+                        deviceContent.pop('setter')
+                deviceList.append(deviceAttribute)
 
-    deviceContentList2 = [{"type":"text", "name":"Temperature", "value":"32.5*C"},
-                          {"type":"text", "name":"Humidity", "value":"60%"},
-                          {"type":"image", "name":"image", "value":"http://www.raspiot.cn/static/images/raspIot.jpg"}]
-    uuid2 = "28:E1:4C:BC:70:0C"
-    deviceName2 = "DHT11"
-    device2 = {}
-    device2['name'] = deviceName2
-    device2['uuid'] = uuid2
-    device2['deviceContent'] = deviceContentList2
-    deviceList.append(device2)
+        roomjson = {}
+        roomjson['name'] = roomName
+        roomjson['updateTime'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        roomjson['devices'] = deviceList
 
-    deviceContentList3 = [{"type":"text", "name":"Temperature", "value":"32.5*C"},
-                          {"type":"text", "name":"Humidity", "value":"65%"}]
-    uuid3 = "28:E1:4C:BC:70:0D"
-    deviceName3 = "DHT12"
-    device3 = {}
-    device3['name'] = deviceName3
-    device3['uuid'] = uuid3
-    device3['deviceContent'] = deviceContentList3
-    deviceList.append(device3)
-
-
-
-    roomjson = {}
-    roomjson['name'] = roomName
-    roomjson['updateTime'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    roomjson['devices'] = deviceList
-
-    return json.dumps(roomjson)
+        return json.dumps(roomjson)
