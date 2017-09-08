@@ -5,11 +5,13 @@
     build roomDict
 '''
 import os
+import copy
 import json
 import time
 import shutil
 import threading
 from Kernel.GlobalConstant import ROOM_PATH
+from Kernel.GlobalConstant import Unauthorized_devices
 from Kernel.FileHandler import saveRoomListToFile
 from Kernel.FileHandler import getRoomListFromFile
 from Kernel.FileHandler import saveRoomContentToFile
@@ -21,6 +23,7 @@ from Kernel.FileHandler import buildNewRoomContentDict
 class RoomHandler:
     ''' RoomHandler.class
         Handle all about room
+        and just about room
     '''
     # private
     __roomContentListDict = dict()
@@ -33,6 +36,10 @@ class RoomHandler:
             self.__roomContentListDict[room['name']] = roomContent
             for index in range(len(roomContent['devices'])):
                 roomContent['devices'][index]['status'] = False
+
+        # for Unauthorized devices
+        if self.getRoomContent(Unauthorized_devices) is None:
+            print(self.addRoom(Unauthorized_devices))
         threading.Thread(target=self.saveRoomListAndRoomContentToFileRegularly, args=()).start()
 
     def addRoom(self, roomName):
@@ -70,15 +77,22 @@ class RoomHandler:
                 self.__roomContentListDict.pop(roomName)
         return self.getRoomJsonList()
 
+    def renameRoom(self, oldRoomName, newRoomName):
+        pass
+
     def getRoomJsonList(self):
         ''' get room list which dumps by json'''
         roomList = self.getRoomList()
         return json.dumps(roomList)
 
-
+    # ################################################################# #
+    # basic functions
     def getRoomContent(self, roomName):
         ''' room content getter '''
-        return self.__roomContentListDict[roomName]
+        if self.__roomContentListDict.get(roomName) is None:
+            return None
+        else:
+            return self.__roomContentListDict[roomName]
 
     def getRoomContentListDict(self):
         return self.__roomContentListDict
@@ -86,7 +100,7 @@ class RoomHandler:
 
     def getRoomList(self):
         ''' room list getter '''
-        roomList = list(self.__roomContentListDict.values())
+        roomList = copy.deepcopy(list(self.__roomContentListDict.values()))
         # roomList don't need devices' information
         for index in range(len(roomList)):
             roomList[index]['devices'] = []
@@ -100,9 +114,9 @@ class RoomHandler:
             time.sleep(3 * 60)
             # save room list
             saveRoomListToFile(self.getRoomList())
-            # remove device's status before save
 
             roomContentList = list(self.__roomContentListDict.values())
             for roomContent in roomContentList:
                 saveRoomContentToFile(roomContent)
             print('Auto save finished.')
+    # ################################################################# #
