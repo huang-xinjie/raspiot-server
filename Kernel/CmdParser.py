@@ -3,6 +3,7 @@ Parser cmd that from app
 '''
 import json
 import datetime
+from Kernel.DeviceHandler import buildNewDeviceDict
 
 class CmdParser:
     def __init__(self, iotManager):
@@ -29,14 +30,18 @@ class CmdParser:
             roomHandler = self.IotManager.getRoomHandler()
             conn.sendall(roomHandler.addRoom(value).encode())
         elif target.split(':')[0] == 'device':
-            pass
+            deviceUuid = value
+            roomName, deviceName = target.split(':')[1].split('/')
+            deviceDict = buildNewDeviceDict(deviceName, deviceUuid)
+            deviceHandler = self.IotManager.getDeviceHandler()
+            conn.sendall(deviceHandler.addDevice(roomName, deviceDict).encode())
         print("Finished")
         conn.close()
 
     def delCommand(self, conn, target, value):
         if target.split(':')[0] == 'room':
             roomHandler = self.IotManager.getRoomHandler()
-            conn.sendall(roomHandler.deleteRoom(value).encode())
+            conn.sendall(roomHandler.delRoom(value).encode())
         elif target.split(':')[0] == 'device':
             roomName = target.split(':')[1]
             deviceName = value
@@ -48,7 +53,8 @@ class CmdParser:
 
         if recvdata['identity'] == 'app':
             command = recvdata
-            # cmd, target, value = json.loads(Json) #以免json的Key顺序乱了，不够保险
+            # cmd, target, value = json.loads(Json)
+            # 以免json的Key顺序乱了，不够保险
             cmd, target, value = command['cmd'], command['target'], command['value']
             if cmd == "get":
                 self.getCommand(conn, target, value)
@@ -59,7 +65,7 @@ class CmdParser:
             elif cmd == 'del':
                 self.delCommand(conn, target, value)
         elif recvdata['identity'] == 'device':
-            self.IotManager.setupIotServer(conn, recvdata)
+            self.IotManager.deviceHandler.setupIotServer(conn, recvdata)
 
 
 def buildJSON(roomName):
