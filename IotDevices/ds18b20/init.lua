@@ -41,10 +41,10 @@ function sayHelloToManager(json)
     end)
 end
 
-function buildJSON(ip, mac)
+function buildJSON(ip, uuid)
     msgtable = {}
     msgtable.ip = ip
-    msgtable.mac = mac
+    msgtable.uuid = uuid
     msgtable.device = "ds18b20"
     msgtable.identity = "device"
     msgtable.repository = "raspIot"
