@@ -3,29 +3,28 @@ import socket
 class DS18B20:
     temperature = ''
 
-    def __init__(self, deviceIp, deviceMac):
+    def __init__(self, deviceIp, deviceUuid):
         self.ip = deviceIp
-        self.mac = deviceMac
+        self.uuid = deviceUuid
 
 
     def getTemp(self):
         return self.connectWithDevice('getTemp')
 
 
-    def buildDeviceJSON(self):
+    def getDeviceAttribute(self):
         device = {}
-        device['uuid'] = 'MAC'
+        device['uuid'] = self.uuid
         device['name'] = 'DS18B20 Temperature sensor'
-        
+
         deviceContent = []
         deviceContent1 = {}
         deviceContent1['type'] = 'text'
         deviceContent1['name'] = 'Temperature'
         deviceContent1['value'] = self.getTemp()
-        deviceContent1['getter'] = 'getTemp()'
-        
+
         deviceContent.append(deviceContent1)
-        
+
         device['deviceContent'] = deviceContent
 
         return device
