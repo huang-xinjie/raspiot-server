@@ -38,6 +38,21 @@ class DeviceHandler:
         iotServer = self.onLineIotServerListDict.get(uuid)
         return iotServer.getDeviceContent()
 
+    def setDeviceContentToValue(self, roomName, deviceName, deviceContentName, value):
+        room = self.IotManager.roomHandler.getRoomContent(roomName)
+        for index in range(len(room['devices'])):
+            if room['devices'][index]['name'] == deviceName:
+                device = room['devices'][index]
+                break
+        for index in range(len(device['deviceContent'])):
+            if device['deviceContent'][index]['name'] == deviceContentName:
+                deviceContentSetter = device['deviceContent'][index]
+                break
+        deviceUuid = device['uuid']
+        exec('iotServer = self.onLineIotServerListDict[deviceUuid]')
+        exec('iotServer.deviceContentSetter(' + value + ')')
+
+
     def setupIotServer(self, conn, recvdata):
         ''' Setup IotServer in a new thread '''
         threading.Thread(target=self.IotServerSetter, args=(conn, recvdata)).start()
@@ -67,6 +82,7 @@ class DeviceHandler:
                 # Add to list of Unauthorized devices
                 # self.devicesUuidMapRoom[uuid] = Unauthorized_devices
                 conn.sendall(json.dumps({'response':'Setup completed'}).encode()) # for the moment
+                return
             # search which room it's belong to
             roomName = self.devicesUuidMapRoom[uuid]
 
