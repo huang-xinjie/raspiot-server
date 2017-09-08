@@ -7,7 +7,7 @@ from Kernel.GlobalConstant import Unauthorized_devices
 
 
 class DeviceHandler:
-
+    onLineIotServerListDict = dict()
     devicesUuidMapRoom = dict()
     def __init__(self, iotManager):
         self.IotManager = iotManager
@@ -32,6 +32,11 @@ class DeviceHandler:
         devices = room['devices']
         return devices
 
+    def getDeviceJsonByUuid(self, uuid):
+        if self.onLineIotServerListDict.get(uuid) is None:
+            return None
+        iotServer = self.onLineIotServerListDict.get(uuid)
+        return iotServer.getDeviceContent()
 
     def setupIotServer(self, conn, recvdata):
         ''' Setup IotServer in a new thread '''
@@ -41,7 +46,7 @@ class DeviceHandler:
     def IotServerSetter(self, conn, recvdata):
         ''' setup IotServer and add it to iotServerList '''
         ip = recvdata['ip']
-        uuid = recvdata['mac']
+        uuid = recvdata['uuid']
         deviceName = recvdata['device']
         moduleName = className = recvdata['iotServer']
 
@@ -55,6 +60,8 @@ class DeviceHandler:
             iotServerClass = getattr(iotServerModule, className)
             # instantiation
             iotServer = iotServerClass(ip, uuid)
+            if self.onLineIotServerListDict.get(uuid) is None:
+                self.onLineIotServerListDict[uuid] = iotServer
 
             if self.devicesUuidMapRoom.get(uuid) is None:
                 # Add to list of Unauthorized devices
@@ -64,27 +71,27 @@ class DeviceHandler:
             roomName = self.devicesUuidMapRoom[uuid]
 
             # set status of this iotServer True
-            devices = self.IotManager.roomHandler.getRoomContent[roomName]['devices']
+            devices = self.IotManager.roomHandler.getRoomContent(roomName)['devices']
+            print(devices)
             '''
             if roomName == Unauthorized_devices:
-                deviceDict = self.buildNewDeviceDict(deviceName, uuid, iotServer)
+                deviceDict = self.buildNewDeviceDict(deviceName, uuid)
                 deviceDict['status'] = True
             else:
             '''
             for index in range(len(devices)):
                 if devices[index]['uuid'] == uuid:
-                    self.IotManager.roomHandler.getRoomContent[roomName]['devices'][index]['status'] = True
+                    self.IotManager.roomHandler.getRoomContent(roomName)['devices'][index]['status'] = True
                     break
             conn.sendall(json.dumps({'response':'Setup completed'}).encode())
-            # exec('print(iotServerList[0].' + iotServerList[0].buildDeviceJSON()['deviceContent'][0]['getter'] + ')')
+            # exec('print(iotServerList[0].' + iotServerList[0].getDeviceContent()['deviceContent'][0]['getter'] + ')')
         except Exception as reason:
             print(__file__ +' Error: ' + str(reason))
 
 
-def buildNewDeviceDict(deviceName, deviceUuid, iotServer=None):
+def buildNewDeviceDict(deviceName, deviceUuid):
     ''' build a device by device blueprint '''
     deviceDict = {"name": deviceName,
                   "uuid": deviceUuid,
-                  "status": False,
-                  "iotServer": None}
+                  "status": False }
     return deviceDict
