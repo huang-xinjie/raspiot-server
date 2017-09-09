@@ -9,7 +9,8 @@ class DS18B20:
 
 
     def getTemp(self):
-        return self.connectWithDevice('getTemp')
+        self.temperature = self.connectWithDevice('getTemp')
+        return self.temperature
 
 
     def getDeviceAttribute(self):
