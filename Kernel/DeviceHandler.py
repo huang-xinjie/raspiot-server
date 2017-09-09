@@ -39,19 +39,25 @@ class DeviceHandler:
         return iotServer.getDeviceContent()
 
     def setDeviceContentToValue(self, roomName, deviceName, deviceContentName, value):
-        room = self.IotManager.roomHandler.getRoomContent(roomName)
-        for index in range(len(room['devices'])):
-            if room['devices'][index]['name'] == deviceName:
-                device = room['devices'][index]
-                break
-        for index in range(len(device['deviceContent'])):
-            if device['deviceContent'][index]['name'] == deviceContentName:
-                deviceContentSetter = device['deviceContent'][index]
-                break
-        deviceUuid = device['uuid']
-        exec('iotServer = self.onLineIotServerListDict[deviceUuid]')
-        exec('iotServer.deviceContentSetter(' + value + ')')
+        try:
+            room = self.IotManager.roomHandler.getRoomContent(roomName)
+            for index in range(len(room['devices'])):
+                if room['devices'][index]['name'] == deviceName:
+                    deviceUuid = room['devices'][index]['uuid']
+                    break
 
+            iotServer = self.onLineIotServerListDict[deviceUuid]
+            device = iotServer.getDeviceAttribute()
+            for index in range(len(device['deviceContent'])):
+                if device['deviceContent'][index]['name'] == deviceContentName:
+                    deviceContentSetter = device['deviceContent'][index]['setter']
+                    break
+
+            exec('iotServer.' + deviceContentSetter + '("' + value + '")')
+        except Exception as reason:
+            print(__file__ + " Error: " + str(reason))
+            return "false"
+        return "true"
 
     def setupIotServer(self, conn, recvdata):
         ''' Setup IotServer in a new thread '''
@@ -88,7 +94,6 @@ class DeviceHandler:
 
             # set status of this iotServer True
             devices = self.IotManager.roomHandler.getRoomContent(roomName)['devices']
-            print(devices)
             '''
             if roomName == Unauthorized_devices:
                 deviceDict = self.buildNewDeviceDict(deviceName, uuid)
