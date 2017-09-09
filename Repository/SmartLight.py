@@ -24,7 +24,7 @@ class SmartLight:
         deviceContent = []
         deviceContent1 = {}
         deviceContent1['type'] = 'switch'
-        deviceContent1['name'] = '开关'
+        deviceContent1['name'] = 'Switch'
         deviceContent1['value'] = self.getLightStatus()
         deviceContent1['setter'] = 'setLightStatus'
 
