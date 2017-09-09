@@ -11,39 +11,39 @@ class CmdParser:
         self.IotManager = iotManager
 
     def setCommand(self, conn, target, value):
-        targetType, target = target.split(':')
-        if targetType == 'room':
+        target = target.split(':')
+        if target[0] == 'room':
             pass
-        elif targetType == 'device':
+        elif target[0] == 'device':
             pass
-        elif targetType == 'deviceContent':
-            roomName, deviceName, deviceContentName = target.split('/')
+        elif target[0] == 'deviceContent':
+            roomName, deviceName, deviceContentName = target[1].split('/')
             deviceHandler = self.IotManager.getDeviceHandler()
             conn.sendall(deviceHandler.setDeviceContentToValue(roomName, deviceName, deviceContentName, value).encode())
         print("Finished.")
         conn.close()
 
     def	getCommand(self, conn, target, value):
-        targetType, target = target.split(':')
-        if targetType == 'server' and value == 'checkServices':
+        target = target.split(':')
+        if target[0] == 'server' and value == 'checkServices':
             conn.sendall("Server is ready".encode())
-        elif targetType == 'room' and value == 'roomlist':
+        elif target[0] == 'room' and value == 'roomlist':
             roomHandler = self.IotManager.getRoomHandler()
             conn.sendall(roomHandler.getRoomJsonList().encode())
-        elif targetType == 'device' and value == 'devicelist':
-            sendJson = self.buildJSON(target)
+        elif target[0] == 'device' and value == 'devicelist':
+            sendJson = self.buildJSON(target[1])
             conn.sendall(sendJson.encode())
         print("Finished.")
         conn.close()
 
     def addCommand(self, conn, target, value):
-        targetType, target = target.split(':')
-        if targetType == 'room':
+        target = target.split(':')
+        if target[0] == 'room':
             roomHandler = self.IotManager.getRoomHandler()
             conn.sendall(roomHandler.addRoom(value).encode())
-        elif targetType == 'device':
+        elif target[0] == 'device':
             deviceUuid = value
-            roomName, deviceName = target.split('/')
+            roomName, deviceName = target[1].split('/')
             deviceDict = buildNewDeviceDict(deviceName, deviceUuid)
             deviceHandler = self.IotManager.getDeviceHandler()
             conn.sendall(deviceHandler.addDevice(roomName, deviceDict).encode())
