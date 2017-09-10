@@ -89,12 +89,16 @@ class DeviceHandler:
                         roomContent = self.IotManager.roomHandler.getRoomContent(roomName)
                         for index in range(len(roomContent['devices'])):
                             if roomContent['devices'][index]['uuid'] == deviceUuid:
-                                roomContent['devices'][index]['status'] = False # set iotServer status to offline
+                                # set iotServer status to offline
+                                roomContent['devices'][index]['status'] = False
                                 print(roomName + ': ' + roomContent['devices'][index]['name'] + ' offline')
                                 break
                         saveRoomContentToFile(roomContent)
                 except Exception as reason:
-                    print(__file__ + ' Error: ' + str(reason))
+                    print('Must use utf-8 to encode cmd when running on Windows.')
+                    print('If not, could not check device is online or not.')
+                    print('(Try: run "chcp 65001" in cmd, and restart RaspServer.)')
+                    return
 
 
 
