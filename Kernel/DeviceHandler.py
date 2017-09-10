@@ -1,8 +1,10 @@
 import os
 import json
+import time
 import shutil
 import importlib
 import threading
+import subprocess
 from Kernel.GlobalConstant import Unauthorized_devices
 from Kernel.FileHandler import saveRoomContentToFile
 
@@ -18,6 +20,7 @@ class DeviceHandler:
                 # using uuid to map room, make room search faster
                 deviceUuid = roomContent['devices'][index]['uuid']
                 self.devicesUuidMapRoom[deviceUuid] = roomContent['name']
+        threading.Thread(target=self.checkIsIotDeviceAliving, args=()).start()
 
 
     def addDevice(self, roomName, device):
@@ -64,7 +67,34 @@ class DeviceHandler:
             return "false"
         return "true"
 
-    #def keepIotDeviceAlive(self):
+
+    def checkIsIotDeviceAliving(self):
+        while True:
+            time.sleep(10)
+            for iotServer in list(self.onLineIotServerListDict.values()):
+                try:
+                    deviceIp = iotServer.ip
+                    deviceUuid = iotServer.uuid
+                    PingCmd = 'ping -n 3 ' + deviceIp
+                    pingResult = subprocess.check_output(PingCmd, shell=True).decode()
+                    # device unreachable
+                    if pingResult.find('from ' + deviceIp) == -1:
+                        # Windows:  100% loss: Reply from itself
+                        #           0%   loss: Reply from deviceIp
+                        # Linux:    100% loss: No reply
+                        #           0%   loss: from deviceIp
+                        del iotServer       # device unreachable, shut iotServer down
+                        self.onLineIotServerListDict.pop(deviceUuid)    # iotServer offline
+                        roomName = self.devicesUuidMapRoom[deviceUuid]
+                        roomContent = self.IotManager.roomHandler.getRoomContent(roomName)
+                        for index in range(len(roomContent['devices'])):
+                            if roomContent['devices'][index]['uuid'] == deviceUuid:
+                                roomContent['devices'][index]['status'] = False # set iotServer status to offline
+                                print(roomName + ': ' + roomContent['devices'][index]['name'] + ' offline')
+                                break
+                        saveRoomContentToFile(roomContent)
+                except Exception as reason:
+                    print(__file__ + ' Error: ' + str(reason))
 
 
 
@@ -112,6 +142,7 @@ class DeviceHandler:
             for index in range(len(devices)):
                 if devices[index]['uuid'] == uuid:
                     devices[index]['status'] = True
+                    print(roomName + ': ' + devices[index]['name'] + ' online')
                     break
             conn.sendall(json.dumps({'response':'Setup completed'}).encode())
         except Exception as reason:
