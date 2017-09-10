@@ -40,7 +40,7 @@ class RoomHandler:
         # for Unauthorized devices
         if self.getRoomContent(Unauthorized_devices) is None:
             print(self.addRoom(Unauthorized_devices))
-        threading.Thread(target=self.saveRoomListAndRoomContentToFileRegularly, args=()).start()
+        # threading.Thread(target=self.saveRoomListAndRoomContentToFileRegularly, args=()).start()
 
     def addRoom(self, roomName):
         '''
@@ -107,16 +107,14 @@ class RoomHandler:
         return roomList
 
 
-    def saveRoomListAndRoomContentToFileRegularly(self):
+    def saveRoomListAndRoomContentToFile(self):
         ''' save room list and room content to file at regular time '''
-        while True:
-            # hold it for three minutes
-            time.sleep(3 * 60)
-            # save room list
-            saveRoomListToFile(self.getRoomList())
 
-            roomContentList = list(self.__roomContentListDict.values())
-            for roomContent in roomContentList:
-                saveRoomContentToFile(roomContent)
-            print('Auto save finished.')
+        # save room list
+        saveRoomListToFile(self.getRoomList())
+
+        roomContentList = list(self.__roomContentListDict.values())
+        for roomContent in roomContentList:
+            saveRoomContentToFile(roomContent)
+        print('Save finished.')
     # ################################################################# #
