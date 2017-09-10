@@ -4,6 +4,7 @@ import shutil
 import importlib
 import threading
 from Kernel.GlobalConstant import Unauthorized_devices
+from Kernel.FileHandler import saveRoomContentToFile
 
 
 class DeviceHandler:
@@ -20,17 +21,21 @@ class DeviceHandler:
 
 
     def addDevice(self, roomName, device):
+        ''' add device
+                to deviceUuidMapRoom
+                to roomContent['devices']
+                and save roomContent to file
+        '''
         deviceUuid = device['uuid']
+        if self.devicesUuidMapRoom.get(deviceUuid) is not None:
+            return 'Device already exists'
         self.devicesUuidMapRoom[deviceUuid] = roomName
-        devices = self.getDevicesByRoomName(roomName)
-        devices.append(device)
-        return 'Add device succeed.'
-
-
-    def getDevicesByRoomName(self, roomName):
         room = self.IotManager.roomHandler.getRoomContent(roomName)
         devices = room['devices']
-        return devices
+        devices.append(device)
+        saveRoomContentToFile(room)
+        return 'Add device succeed.'
+
 
     def getDeviceJsonByUuid(self, uuid):
         if self.onLineIotServerListDict.get(uuid) is None:
@@ -58,6 +63,10 @@ class DeviceHandler:
             print(__file__ + " Error: " + str(reason))
             return "false"
         return "true"
+
+    #def keepIotDeviceAlive(self):
+
+
 
     def setupIotServer(self, conn, recvdata):
         ''' Setup IotServer in a new thread '''
@@ -102,10 +111,9 @@ class DeviceHandler:
             '''
             for index in range(len(devices)):
                 if devices[index]['uuid'] == uuid:
-                    self.IotManager.roomHandler.getRoomContent(roomName)['devices'][index]['status'] = True
+                    devices[index]['status'] = True
                     break
             conn.sendall(json.dumps({'response':'Setup completed'}).encode())
-            # exec('print(iotServerList[0].' + iotServerList[0].getDeviceContent()['deviceContent'][0]['getter'] + ')')
         except Exception as reason:
             print(__file__ +' Error: ' + str(reason))
 
@@ -114,5 +122,5 @@ def buildNewDeviceDict(deviceName, deviceUuid):
     ''' build a device by device blueprint '''
     deviceDict = {"name": deviceName,
                   "uuid": deviceUuid,
-                  "status": False }
+                  "status": False}
     return deviceDict
