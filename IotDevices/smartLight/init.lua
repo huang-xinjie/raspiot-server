@@ -10,7 +10,7 @@ wifi.sta.connect()
 
 tcpS = net.createServer(net.TCP, 10)
 pin = 3
-switchStatus = 'true'
+switchStatus = 'false'
 gpio.mode(pin, gpio.OUTPUT)
 
 function getStatus()
@@ -18,15 +18,14 @@ function getStatus()
 end
 
 function switch(command)
-    if command == "on" then
+    if command == "true" then
         gpio.write(pin, gpio.HIGH)
         switchStatus = 'true'
-        return "on"
     else
         gpio.write(pin, gpio.LOW)
-        switchStatus = 'true'
-        return "off"
+        switchStatus = 'false'
     end
+    return switchStatus
 end
 
 function sayHelloToManager(json)
