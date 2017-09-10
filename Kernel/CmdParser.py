@@ -81,9 +81,9 @@ class CmdParser:
     def buildJSON(self, roomName):
         deviceList = []
         roomContent = copy.deepcopy(self.IotManager.roomHandler.getRoomContent(roomName))
-        for device in roomContent['devices']:
-            if device['status'] is True:
-                iotServer = self.IotManager.deviceHandler.onLineIotServerListDict[device['uuid']]
+        for d in roomContent['devices']:
+            if d['status'] is True:
+                iotServer = self.IotManager.deviceHandler.onLineIotServerListDict[d['uuid']]
                 deviceAttribute = iotServer.getDeviceAttribute()
                 # pop key: 'getter' or 'setter'
                 for deviceContent in deviceAttribute['deviceContent']:
@@ -91,7 +91,11 @@ class CmdParser:
                         deviceContent.pop('getter')
                     elif deviceContent.get('setter') is not None:
                         deviceContent.pop('setter')
+                deviceAttribute['status'] = True
                 deviceList.append(deviceAttribute)
+            elif d['status'] is False:
+                d['deviceContent'] = []
+                deviceList.append(d)
 
         roomjson = {}
         roomjson['name'] = roomName
