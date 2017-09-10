@@ -12,6 +12,11 @@ class IotServer:
         device['name'] = 'device name'
 
         deviceContent = []
+        deviceContent1 = {}
+        deviceContent1['type'] = 'switch'
+        deviceContent1['name'] = 'Switch Name'
+        deviceContent1['value'] = 'false'
+        deviceContent1['setter'] = 'getValue'
         
         device['deviceContent'] = deviceContent
 
