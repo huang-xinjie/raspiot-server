@@ -70,7 +70,7 @@ class DeviceHandler:
 
     def checkIsIotDeviceAliving(self):
         while True:
-            time.sleep(10)
+            time.sleep(60)  # 60 seconds
             for iotServer in list(self.onLineIotServerListDict.values()):
                 try:
                     deviceIp = iotServer.ip
@@ -97,7 +97,7 @@ class DeviceHandler:
                 except Exception as reason:
                     print('Must use utf-8 to encode cmd when running on Windows.')
                     print('If not, could not check device is online or not.')
-                    print('(Try: run "chcp 65001" in cmd, and restart RaspServer.)')
+                    print('(Try: run "chcp 65001" in cmd, and then restart RaspServer.)')
                     return
 
 
