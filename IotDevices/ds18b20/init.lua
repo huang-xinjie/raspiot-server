@@ -25,7 +25,11 @@ function getTemp(c)
     t:read_temp(readout, pin)
 end
 
-function sayHelloToManager(json)
+function sayHelloToManager(times)
+    if times == 0 then
+        return false
+    end
+    json = buildJSON(wifi.sta.getip(), wifi.sta.getmac())
     srv = net.createConnection(net.TCP, 0)
     -- default manager port and ip
     srv:connect(22015, "192.168.17.1")
@@ -36,7 +40,7 @@ function sayHelloToManager(json)
         if recvJson.response == 'Setup completed' then
             return true
         else 
-            sayHelloToManager(json)
+            sayHelloToManager(times - 1)
         end
     end)
 end
@@ -64,8 +68,8 @@ tmr.alarm(1, 1000, tmr.ALARM_AUTO, function()
         print('Waiting for IP ...')
     else
         print('IP is ' .. wifi.sta.getip())
-        json = buildJSON(wifi.sta.getip(), wifi.sta.getmac())
-        sayHelloToManager(json)
+        times = 3
+        sayHelloToManager(times)
         tmr.stop(1)
     end
 end)
