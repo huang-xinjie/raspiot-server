@@ -2,14 +2,15 @@ import socket
 
 class IotServer:
 
-    def __init__(self, deviceIp, deviceUuid):
+    def __init__(self, deviceIp, deviceUuid, deviceName):
         self.ip = deviceIp
         self.uuid = deviceUuid
+        self.name = deviceName
 
     def getDeviceAttribute(self):
         device = {}
         device['uuid'] = self.uuid
-        device['name'] = 'device name'
+        device['name'] = self.name
 
         deviceContent = []
         deviceContent1 = {}
@@ -17,7 +18,7 @@ class IotServer:
         deviceContent1['name'] = 'Switch Name'
         deviceContent1['value'] = 'false'
         deviceContent1['setter'] = 'getValue'
-        
+
         device['deviceContent'] = deviceContent
 
         return device

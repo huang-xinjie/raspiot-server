@@ -3,9 +3,10 @@ import socket
 class SmartLight:
     lightStatus = ''
 
-    def __init__(self, deviceIp, deviceUuid):
+    def __init__(self, deviceIp, deviceUuid, deviceName):
         self.ip = deviceIp
         self.uuid = deviceUuid
+        self.name = deviceName
 
     def getLightStatus(self):
         self.lightStatus = self.connectWithDevice('getStatus')
@@ -19,7 +20,7 @@ class SmartLight:
     def getDeviceAttribute(self):
         device = {}
         device['uuid'] = self.uuid
-        device['name'] = 'Smart light'
+        device['name'] = self.name
 
         deviceContent = []
         deviceContent1 = {}

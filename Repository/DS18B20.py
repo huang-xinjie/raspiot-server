@@ -3,9 +3,10 @@ import socket
 class DS18B20:
     temperature = ''
 
-    def __init__(self, deviceIp, deviceUuid):
+    def __init__(self, deviceIp, deviceUuid, deviceName):
         self.ip = deviceIp
         self.uuid = deviceUuid
+        self.name = deviceName
 
 
     def getTemp(self):
@@ -16,7 +17,7 @@ class DS18B20:
     def getDeviceAttribute(self):
         device = {}
         device['uuid'] = self.uuid
-        device['name'] = 'DS18B20 Temperature sensor'
+        device['name'] = self.name
 
         deviceContent = []
         deviceContent1 = {}
