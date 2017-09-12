@@ -20,9 +20,6 @@ if __name__ == '__main__':
         print("connected by ", addr)
         recvJson = conn.recv(BUFFSIZE).decode()
         print(recvJson)
-        try:
-            recvdata = json.loads(recvJson)
-            cmdParser.commandParser(conn, recvdata)
-        except Exception as reason:
-            print(__file__ +' Error: ' + str(reason))
+        recvdata = json.loads(recvJson)
+        cmdParser.commandParser(conn, recvdata)
     s.close()
