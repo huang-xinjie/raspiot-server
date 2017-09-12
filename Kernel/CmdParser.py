@@ -19,7 +19,7 @@ class CmdParser:
         elif target[0] == 'deviceContent':
             roomName, deviceName, deviceContentName = target[1].split('/')
             deviceHandler = self.IotManager.getDeviceHandler()
-            conn.sendall(deviceHandler.setDeviceContentToValue(roomName, deviceName, deviceContentName, value).encode())
+            conn.sendall(deviceHandler.setValueToDeviceContent(roomName, deviceName, deviceContentName, value).encode())
         print("Finished.")
         conn.close()
 
@@ -83,8 +83,7 @@ class CmdParser:
         roomContent = copy.deepcopy(self.IotManager.roomHandler.getRoomContent(roomName))
         for d in roomContent['devices']:
             if d['status'] is True:
-                iotServer = self.IotManager.deviceHandler.onLineIotServerListDict[d['uuid']]
-                deviceAttribute = iotServer.getDeviceAttribute()
+                deviceAttribute = self.IotManager.deviceHandler.getDeviceAttributeByUuid(d['uuid'])
                 # pop key: 'getter' or 'setter'
                 for deviceContent in deviceAttribute['deviceContent']:
                     if deviceContent.get('getter') is not None:
