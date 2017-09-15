@@ -11,14 +11,16 @@ cmdParser = iotManager.getCmdParser()
 def relayByCloudServer():
     sc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sc.connect(('www.raspIot.org', 22222))
-    response = sc.recv(BUFFSIZE).decode()
-    print(response)
 
     while True:
         recvJson = sc.recv(BUFFSIZE).decode()
+        if recvJson == 'Connect finished.':
+            continue
         print('From cloud: ', recvJson)
         recvdata = json.loads(recvJson)
         cmdParser.commandParser(sc, recvdata)
+        sc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sc.connect(('www.raspIot.org', 22222))
 
 if __name__ == '__main__':
     try:
