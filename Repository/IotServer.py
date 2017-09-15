@@ -8,20 +8,22 @@ class IotServer:
         self.name = deviceName
 
     def getDeviceAttribute(self):
-        device = {}
-        device['uuid'] = self.uuid
-        device['name'] = self.name
+        try:
+            device = {}
+            device['uuid'] = self.uuid
+            device['name'] = self.name
 
-        deviceContent = []
-        deviceContent1 = {}
-        deviceContent1['type'] = 'switch'
-        deviceContent1['name'] = 'Switch Name'
-        deviceContent1['value'] = 'false'
-        deviceContent1['setter'] = 'getValue'
+            deviceContent = []
+            deviceContent1 = {}
+            deviceContent1['type'] = 'switch'
+            deviceContent1['name'] = 'Switch Name'
+            deviceContent1['value'] = 'false'
+            deviceContent1['setter'] = 'getValue'
 
-        device['deviceContent'] = deviceContent
-
-        return device
+            device['deviceContent'] = deviceContent
+            return device
+        except Exception:
+            return None
 
     def connectWithDevice(self, cmd):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

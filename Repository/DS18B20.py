@@ -15,21 +15,23 @@ class DS18B20:
 
 
     def getDeviceAttribute(self):
-        device = {}
-        device['uuid'] = self.uuid
-        device['name'] = self.name
+        try:
+            device = {}
+            device['uuid'] = self.uuid
+            device['name'] = self.name
 
-        deviceContent = []
-        deviceContent1 = {}
-        deviceContent1['type'] = 'text'
-        deviceContent1['name'] = 'Temperature'
-        deviceContent1['value'] = self.getTemp()
+            deviceContent = []
+            deviceContent1 = {}
+            deviceContent1['type'] = 'text'
+            deviceContent1['name'] = 'Temperature'
+            deviceContent1['value'] = self.getTemp()
 
-        deviceContent.append(deviceContent1)
+            deviceContent.append(deviceContent1)
 
-        device['deviceContent'] = deviceContent
-
-        return device
+            device['deviceContent'] = deviceContent
+            return device
+        except Exception:
+            return None
 
 
     def connectWithDevice(self, cmd):

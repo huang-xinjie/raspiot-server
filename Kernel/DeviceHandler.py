@@ -120,9 +120,6 @@ class DeviceHandler(object):
         Args:
             None
 
-        Returns:
-            None
-
         Raisers:
             TypeError: an error occurred accessing ping result in not utf-8 encoding
         '''
@@ -132,14 +129,7 @@ class DeviceHandler(object):
                 try:
                     deviceIp = iotServer.ip
                     deviceUuid = iotServer.uuid
-                    PingCmd = 'ping -n 3 ' + deviceIp
-                    pingResult = subprocess.check_output(PingCmd, shell=True).decode()
-                    # device unreachable
-                    if pingResult.find('from ' + deviceIp) == -1:
-                        # Windows:  100% loss: Reply from itself
-                        #           0%   loss: Reply from deviceIp
-                        # Linux:    100% loss: No reply
-                        #           0%   loss: from deviceIp
+                    if self.pingDevice(deviceIp) is False:
                         del iotServer       # device unreachable, shut iotServer down
                         self.__onlineIotServerListDict.pop(deviceUuid)    # iotServer offline
                         roomName = self.__devicesUuidMapRoom[deviceUuid]
@@ -158,6 +148,20 @@ class DeviceHandler(object):
                     print('(Try: run "chcp 65001" in cmd, and then restart RaspServer.)')
                     return
 
+    def pingDevice(self, deviceIp):
+        if deviceIp is None:
+            return False
+        PingCmd = 'ping -n 3 ' + deviceIp
+        pingResult = subprocess.check_output(PingCmd, shell=True).decode()
+        # device unreachable
+        if pingResult.find('from ' + deviceIp) == -1:
+            # Windows:  100% loss: Reply from itself
+            #           0%   loss: Reply from deviceIp
+            # Linux:    100% loss: No reply
+            #           0%   loss: from deviceIp
+            return False
+        else:
+            return True
 
 
     def setupIotServer(self, conn, recvdata):
@@ -242,6 +246,13 @@ class DeviceHandler(object):
                 deviceName = devices[index]['name']
                 return deviceName
         return None
+
+    def getDeviceIpByUuid(self, uuid):
+        iotServer = self.__onlineIotServerListDict.get(uuid)
+        if iotServer is not None:
+            return iotServer.ip
+        else:
+            return None
 
 
 def buildNewDeviceDict(deviceName, deviceUuid):

@@ -18,22 +18,24 @@ class SmartLight:
 
 
     def getDeviceAttribute(self):
-        device = {}
-        device['uuid'] = self.uuid
-        device['name'] = self.name
+        try:
+            device = {}
+            device['uuid'] = self.uuid
+            device['name'] = self.name
 
-        deviceContent = []
-        deviceContent1 = {}
-        deviceContent1['type'] = 'switch'
-        deviceContent1['name'] = 'Switch'
-        deviceContent1['value'] = self.getLightStatus()
-        deviceContent1['setter'] = 'setLightStatus'
+            deviceContent = []
+            deviceContent1 = {}
+            deviceContent1['type'] = 'switch'
+            deviceContent1['name'] = 'Switch'
+            deviceContent1['value'] = self.getLightStatus()
+            deviceContent1['setter'] = 'setLightStatus'
 
-        deviceContent.append(deviceContent1)
+            deviceContent.append(deviceContent1)
 
-        device['deviceContent'] = deviceContent
-
-        return device
+            device['deviceContent'] = deviceContent
+            return device
+        except Exception:
+            return None
 
     def connectWithDevice(self, cmd):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
