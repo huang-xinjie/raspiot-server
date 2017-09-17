@@ -85,16 +85,20 @@ class CmdParser:
             if d['status'] is True:
                 deviceAttribute = self.IotManager.deviceHandler.getDeviceAttributeByUuid(d['uuid'])
                 # pop key: 'getter' or 'setter'
-                for deviceContent in deviceAttribute['deviceContent']:
-                    if deviceContent.get('getter') is not None:
-                        deviceContent.pop('getter')
-                    elif deviceContent.get('setter') is not None:
-                        deviceContent.pop('setter')
-                deviceAttribute['status'] = True
-                deviceList.append(deviceAttribute)
-            elif d['status'] is False:
-                d['deviceContent'] = []
-                deviceList.append(d)
+                if deviceAttribute is not None:
+                    for deviceContent in deviceAttribute['deviceContent']:
+                        if deviceContent.get('getter') is not None:
+                            deviceContent.pop('getter')
+                        elif deviceContent.get('setter') is not None:
+                            deviceContent.pop('setter')
+                    deviceAttribute['status'] = True
+                    deviceList.append(deviceAttribute)
+                    continue
+
+            # elif d['status'] is False:
+            d['status'] = False
+            d['deviceContent'] = []
+            deviceList.append(d)
 
         roomjson = {}
         roomjson['name'] = roomName
