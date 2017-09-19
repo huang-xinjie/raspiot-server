@@ -4,13 +4,16 @@ import socket
 import threading
 from Kernel.IotManager import IotManager
 from Kernel.GlobalConstant import BUFFSIZE
+from Kernel.GlobalConstant import IDENTITY
 
 iotManager = IotManager()
 cmdParser = iotManager.getCmdParser()
 
 def relayByCloudServer():
+    RaspServerIdentityJson = json.dumps({'identity': IDENTITY})
     sc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sc.connect(('www.raspIot.org', 22222))
+    sc.sendall(RaspServerIdentityJson.encode())
     print('Connect cloud server finished.')
     while True:
         recvJson = sc.recv(BUFFSIZE).decode()
@@ -25,6 +28,7 @@ def relayByCloudServer():
             sc.close()
         sc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sc.connect(('www.raspIot.org', 22222))
+        sc.sendall(RaspServerIdentityJson.encode())
 
 if __name__ == '__main__':
     try:

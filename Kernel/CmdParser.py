@@ -5,6 +5,7 @@ import copy
 import json
 import datetime
 from Kernel.DeviceHandler import buildNewDeviceDict
+from Kernel.GlobalConstant import IDENTITY
 
 class CmdParser:
     def __init__(self, iotManager):
@@ -26,7 +27,7 @@ class CmdParser:
     def	getCommand(self, conn, target, value):
         target = target.split(':')
         if target[0] == 'server' and value == 'checkServices':
-            conn.sendall("Server is ready".encode())
+            conn.sendall("RaspServer is ready.".encode())
         elif target[0] == 'room' and value == 'roomlist':
             roomHandler = self.IotManager.getRoomHandler()
             conn.sendall(roomHandler.getRoomJsonList().encode())
@@ -61,7 +62,7 @@ class CmdParser:
         conn.close()
 
     def commandParser(self, conn, recvdata):
-        if recvdata['identity'] == 'app':
+        if recvdata['identity'] == IDENTITY:
             command = recvdata
             # cmd, target, value = json.loads(Json)
             # 以免json的Key顺序乱了，不够保险
