@@ -74,7 +74,11 @@ class DeviceHandler(object):
         if self.__onlineIotServerListDict.get(uuid) is None:
             return None
         iotServer = self.__onlineIotServerListDict.get(uuid)
-        return iotServer.getDeviceAttribute()
+        try:
+            attribute = iotServer.getDeviceAttribute()
+        except Exception:
+            attribute = None
+        return attribute
 
     def setValueToDeviceContent(self, roomName, deviceName, deviceContentName, value):
         '''setValueToDeviceContent method
