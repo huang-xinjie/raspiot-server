@@ -5,6 +5,7 @@ import copy
 import json
 import datetime
 from Kernel.DeviceHandler import buildNewDeviceDict
+from Kernel.GlobalConstant import DEFAULT_IDENTITY
 from Kernel.GlobalConstant import IDENTITY
 
 class CmdParser:
@@ -62,7 +63,7 @@ class CmdParser:
         conn.close()
 
     def commandParser(self, conn, recvdata):
-        if recvdata['identity'] == IDENTITY:
+        if recvdata['identity'] == IDENTITY or DEFAULT_IDENTITY:
             command = recvdata
             # cmd, target, value = json.loads(Json)
             # 以免json的Key顺序乱了，不够保险
