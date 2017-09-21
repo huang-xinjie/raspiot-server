@@ -190,6 +190,7 @@ class DeviceHandler(object):
             I will solve, please later.
         '''
         ip = recvdata['ip']
+        name = recvdata['device']
         uuid = recvdata['uuid']
         moduleName = className = recvdata['iotServer']
 
@@ -202,10 +203,11 @@ class DeviceHandler(object):
                 return
             else:
                 roomName = Unauthorized_devices
-        
+                deviceName = name
         else:
             # search which room it's belong to
             roomName = self.__devicesUuidMapRoom[uuid]
+            deviceName = self.getDeviceNameByUuid(uuid)
 
 
         try:
@@ -217,7 +219,7 @@ class DeviceHandler(object):
             iotServerModule = importlib.import_module('IotServer.' + moduleName)
             # import class from module
             iotServerClass = getattr(iotServerModule, className)
-            deviceName = self.getDeviceNameByUuid(uuid)
+
             # instantiation
             iotServer = iotServerClass(ip, uuid, deviceName)
             if self.__onlineIotServerListDict.get(uuid) is None:
@@ -237,7 +239,7 @@ class DeviceHandler(object):
                     break
             conn.sendall(json.dumps({'response':'Setup completed'}).encode())
         except Exception as reason:
-            print(__file__ +' Error: ' + str(reason))
+            print(__name__ +' Error: ' + str(reason))
 
     def getDeviceNameByUuid(self, uuid):
         roomName = self.__devicesUuidMapRoom[uuid]
