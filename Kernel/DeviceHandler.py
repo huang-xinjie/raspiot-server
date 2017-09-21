@@ -190,7 +190,6 @@ class DeviceHandler(object):
             I will solve, please later.
         '''
         ip = recvdata['ip']
-        name = recvdata['device']
         uuid = recvdata['uuid']
         moduleName = className = recvdata['iotServer']
 
@@ -203,7 +202,7 @@ class DeviceHandler(object):
                 return
             else:
                 roomName = Unauthorized_devices
-                deviceName = name
+                deviceName = recvdata['device'] + '_' + uuid[-4:]
         else:
             # search which room it's belong to
             roomName = self.__devicesUuidMapRoom[uuid]
