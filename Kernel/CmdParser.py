@@ -63,11 +63,10 @@ class CmdParser:
         conn.close()
 
     def commandParser(self, conn, recvdata):
-        if recvdata['identity'] == IDENTITY or DEFAULT_IDENTITY:
-            command = recvdata
+        if recvdata['identity'] == IDENTITY or recvdata['identity'] == DEFAULT_IDENTITY:
             # cmd, target, value = json.loads(Json)
             # 以免json的Key顺序乱了，不够保险
-            cmd, target, value = command['cmd'], command['target'], command['value']
+            cmd, target, value = recvdata['cmd'], recvdata['target'], recvdata['value']
             if cmd == "get":
                 self.getCommand(conn, target, value)
             elif cmd == 'set':

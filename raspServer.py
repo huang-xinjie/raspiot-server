@@ -17,7 +17,7 @@ def relayByCloudServer():
     print('Connect cloud server finished.')
     while True:
         recvJson = sc.recv(BUFFSIZE).decode()
-        if recvJson == 'Connect finished.' or '':
+        if recvJson == 'Connect finished.' or recvJson == '':
             continue
         elif recvJson == 'Heartbeat detection.':
             sc.sendall('Roger.'.encode())
