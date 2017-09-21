@@ -4,15 +4,17 @@ import socket
 import threading
 from Kernel.IotManager import IotManager
 from Kernel.GlobalConstant import BUFFSIZE
+from UserConfig import CLOUD_SERVER_ADDRESS
 from UserConfig import IDENTITY
 
 iotManager = IotManager()
 cmdParser = iotManager.getCmdParser()
 
 def relayByCloudServer():
+    # for CloudServer authorized
     RaspServerIdentityJson = json.dumps({'identity': IDENTITY})
     sc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sc.connect(('www.raspIot.org', 22222))
+    sc.connect(CLOUD_SERVER_ADDRESS)
     sc.sendall(RaspServerIdentityJson.encode())
     print('Connect cloud server finished.')
     while True:
@@ -22,6 +24,9 @@ def relayByCloudServer():
         elif recvJson == 'Heartbeat detection.':
             sc.sendall('Roger.'.encode())
             continue
+        elif recvJson == 'You need to log in.':
+            print('From raspCloud: ', recvJson)
+            return
         print('From cloud: ', recvJson)
         try:
             recvdata = json.loads(recvJson)
