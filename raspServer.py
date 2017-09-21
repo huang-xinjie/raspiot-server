@@ -4,7 +4,7 @@ import socket
 import threading
 from Kernel.IotManager import IotManager
 from Kernel.GlobalConstant import BUFFSIZE
-from Kernel.GlobalConstant import IDENTITY
+from UserConfig import IDENTITY
 
 iotManager = IotManager()
 cmdParser = iotManager.getCmdParser()

@@ -16,8 +16,4 @@ RoomListFile = ROOM_PATH + '.roomListFile.pkl'
 
 Unauthorized_devices = 'Unauthorized devices'
 
-UNAUTHORIZED_ACCESS_MODEL = True
-
-IDENTITY = 'xjhuang@s-an.org'
-
 DEFAULT_IDENTITY = "support@raspiot.org"

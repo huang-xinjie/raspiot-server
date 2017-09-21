@@ -6,7 +6,7 @@ import json
 import datetime
 from Kernel.DeviceHandler import buildNewDeviceDict
 from Kernel.GlobalConstant import DEFAULT_IDENTITY
-from Kernel.GlobalConstant import IDENTITY
+from UserConfig import IDENTITY
 
 class CmdParser:
     def __init__(self, iotManager):

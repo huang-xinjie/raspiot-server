@@ -7,7 +7,7 @@ import threading
 import subprocess
 from Kernel.FileHandler import saveRoomContentToFile
 from Kernel.GlobalConstant import Unauthorized_devices
-from Kernel.GlobalConstant import UNAUTHORIZED_ACCESS_MODEL
+from UserConfig import UNAUTHORIZED_ACCESS_MODE
 
 
 class DeviceHandler(object):
@@ -193,12 +193,20 @@ class DeviceHandler(object):
         uuid = recvdata['uuid']
         moduleName = className = recvdata['iotServer']
 
-        if self.__devicesUuidMapRoom.get(uuid) is None and UNAUTHORIZED_ACCESS_MODEL is False:
+        if self.__devicesUuidMapRoom.get(uuid) is None:
+            if UNAUTHORIZED_ACCESS_MODEL is False:
                 # Add to list of Unauthorized devices
                 # self.devicesUuidMapRoom[uuid] = Unauthorized_devices
                 conn.sendall(json.dumps({'response':'Setup completed'}).encode()) # for the moment
                 print('Unauthorized devices: ' + uuid)
                 return
+            else:
+                roomName = Unauthorized_devices
+        
+        else:
+            # search which room it's belong to
+            roomName = self.__devicesUuidMapRoom[uuid]
+
 
         try:
             # get iotServer module from device's Repository
@@ -214,18 +222,14 @@ class DeviceHandler(object):
             iotServer = iotServerClass(ip, uuid, deviceName)
             if self.__onlineIotServerListDict.get(uuid) is None:
                 self.__onlineIotServerListDict[uuid] = iotServer
-
-            # search which room it's belong to
-            roomName = self.__devicesUuidMapRoom[uuid]
-
+            
+            if roomName == Unauthorized_devices:
+                deviceDict = buildNewDeviceDict(deviceName, uuid)
+                deviceDict['status'] = True
+            
             # set status of this iotServer True
             devices = self.IotManager.roomHandler.getRoomContent(roomName)['devices']
-            '''
-            if roomName == Unauthorized_devices:
-                deviceDict = self.buildNewDeviceDict(deviceName, uuid)
-                deviceDict['status'] = True
-            else:
-            '''
+
             for index in range(len(devices)):
                 if devices[index]['uuid'] == uuid:
                     devices[index]['status'] = True
