@@ -153,7 +153,7 @@ class DeviceHandler(object):
     def pingDevice(self, deviceIp):
         if deviceIp is None:
             return False
-        PingCmd = 'ping -n 3 ' + deviceIp
+        PingCmd = 'ping -c 3 ' + deviceIp
         pingResult = subprocess.check_output(PingCmd, shell=True).decode()
         # device unreachable
         if pingResult.find('Unreachable') == -1:
