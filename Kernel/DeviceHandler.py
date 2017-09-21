@@ -194,7 +194,7 @@ class DeviceHandler(object):
         moduleName = className = recvdata['iotServer']
 
         if self.__devicesUuidMapRoom.get(uuid) is None:
-            if UNAUTHORIZED_ACCESS_MODEL is False:
+            if UNAUTHORIZED_ACCESS_MODE is False:
                 # Add to list of Unauthorized devices
                 # self.devicesUuidMapRoom[uuid] = Unauthorized_devices
                 conn.sendall(json.dumps({'response':'Setup completed'}).encode()) # for the moment

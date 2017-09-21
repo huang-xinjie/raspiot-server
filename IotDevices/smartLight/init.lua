@@ -1,7 +1,7 @@
 -- switch.lua
 station_config = {}
-station_config.ssid = "ssid"
-station_config.pwd = "password"
+station_config.ssid = "what_the_hell"
+station_config.pwd = "daiguaCancan"
 
 print('Setting up WIFI...')
 wifi.setmode(wifi.STATION)
@@ -34,7 +34,7 @@ function sayHelloToManager(times)
     end
     json = buildJSON(wifi.sta.getip(), wifi.sta.getmac())
     srv = net.createConnection(net.TCP, 0)
-    srv:connect(22015, "192.168.17.1")
+    srv:connect(22015, "192.168.1.242")
     srv:send(json)
     srv:on("receive", function(sck, c) 
         print(c) 
