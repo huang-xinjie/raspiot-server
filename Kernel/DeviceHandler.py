@@ -147,9 +147,7 @@ class DeviceHandler(object):
                         saveRoomContentToFile(roomContent)
                 except Exception as reason:
                     print(__name__ + ' Error:' + str(reason))
-                    print('Must use utf-8 to encode cmd when running on Windows.')
-                    print('If not, could not check device is online or not.')
-                    print('(Try: run "chcp 65001" in cmd, and then restart RaspServer.)')
+                    print('Just use utf-8 coding and use English, please!')
                     return
 
     def pingDevice(self, deviceIp):
@@ -158,14 +156,9 @@ class DeviceHandler(object):
         PingCmd = 'ping -n 3 ' + deviceIp
         pingResult = subprocess.check_output(PingCmd, shell=True).decode()
         # device unreachable
-        if pingResult.find('from ' + deviceIp) == -1:
-            # Windows:  100% loss: Reply from itself
-            #           0%   loss: Reply from deviceIp
-            # Linux:    100% loss: No reply
-            #           0%   loss: from deviceIp
-            return False
-        else:
+        if pingResult.find('Unreachable') == -1:
             return True
+        return False
 
 
     def setupIotServer(self, conn, recvdata):
@@ -204,6 +197,7 @@ class DeviceHandler(object):
                 # Add to list of Unauthorized devices
                 # self.devicesUuidMapRoom[uuid] = Unauthorized_devices
                 conn.sendall(json.dumps({'response':'Setup completed'}).encode()) # for the moment
+                print('Unauthorized devices: ' + uuid)
                 return
 
         try:
