@@ -198,7 +198,9 @@ class DeviceHandler(object):
                 # Add to list of Unauthorized devices
                 # self.devicesUuidMapRoom[uuid] = Unauthorized_devices
                 conn.sendall(json.dumps({'response':'Setup completed'}).encode()) # for the moment
-                print('Unauthorized devices: ' + uuid)
+                print('Unauthorized devices: ' + uuid + ' reject to access in.')
+                print("Finished.")
+                conn.close()
                 return
             else:
                 roomName = Unauthorized_devices
@@ -237,6 +239,8 @@ class DeviceHandler(object):
                     print(roomName + ': ' + devices[index]['name'] + ' online')
                     break
             conn.sendall(json.dumps({'response':'Setup completed'}).encode())
+            print("Finished.")
+            conn.close()
         except Exception as reason:
             print(__name__ +' Error: ' + str(reason))
 
