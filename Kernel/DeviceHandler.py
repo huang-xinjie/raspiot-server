@@ -205,6 +205,9 @@ class DeviceHandler(object):
             else:
                 roomName = Unauthorized_devices
                 deviceName = recvdata['device'] + '_' + uuid[-4:]
+                device = buildNewDeviceDict(deviceName, uuid)
+                # add unauthorized devices to their room
+                self.addDevice(roomName, device)
         else:
             # search which room it's belong to
             roomName = self.__devicesUuidMapRoom[uuid]
