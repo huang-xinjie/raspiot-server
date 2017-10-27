@@ -18,11 +18,17 @@ def relayByCloudServer():
         sc.connect(CLOUD_SERVER_ADDRESS)
         sc.sendall(RaspServerIdentityJson.encode())
         print('Connect cloud server finished.')
+    except ConnectionRefusedError:
+        print('**************************************')
+        print('* Error: Cloud server refused.       *')
+        print('*        Please check cloud server.  *')
+        print('**************************************')
+        return  # cloud service disable.
     except TimeoutError:
-        print('*********************************************')
-        print('* Connect cloud server timeout.             *')
-        print('* Please check network or the cloud server. *')
-        print('*********************************************')
+        print('****************************************************')
+        print('* Error: Connect cloud server timeout.             *')
+        print('*        Please check network or the cloud server. *')
+        print('****************************************************')
         return  # cloud service disable.
     while True:
         recvJson = sc.recv(BUFFSIZE).decode()
@@ -38,7 +44,7 @@ def relayByCloudServer():
         try:
             recvdata = json.loads(recvJson)
             cmdParser.commandParser(sc, recvdata)
-        except json.decoder.JSONDecodeError:
+        except Exception:
             sc.sendall('Invalid json!'.encode())
             sc.close()
         sc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
