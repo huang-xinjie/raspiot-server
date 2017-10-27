@@ -146,7 +146,6 @@ class DeviceHandler(object):
                                 break
                         saveRoomContentToFile(roomContent)
                 except Exception as reason:
-                    print(__name__ + ' Error:' + str(reason))
                     print('Just use utf-8 coding and use English, please!')
                     return
 
@@ -204,7 +203,7 @@ class DeviceHandler(object):
                 return
             else:
                 roomName = Unauthorized_devices
-                deviceName = recvdata['device'] + '_' + uuid[-4:]
+                deviceName = recvdata['device'] + '_' + uuid.replace(':', '')[-4:]
                 device = buildNewDeviceDict(deviceName, uuid)
                 # add unauthorized devices to their room
                 print(self.addDevice(roomName, device))

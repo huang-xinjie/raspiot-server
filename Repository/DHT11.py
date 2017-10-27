@@ -29,13 +29,13 @@ class DHT11:
         deviceContent1['name'] = 'Temperature'
         deviceContent1['value'] = self.temperature + '℃'
 
-        deviceContent1 = {}
-        deviceContent1['type'] = 'text'
-        deviceContent1['name'] = 'Humidity'
-        deviceContent1['value'] = self.humidity + '%'
+        deviceContent2 = {}
+        deviceContent2['type'] = 'text'
+        deviceContent2['name'] = 'Humidity'
+        deviceContent2['value'] = self.humidity + '%'
+
         deviceContent.append(deviceContent1)
-
-
+        deviceContent.append(deviceContent2)
         device['deviceContent'] = deviceContent
         return device
 
