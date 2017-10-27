@@ -155,9 +155,8 @@ class DeviceHandler(object):
         try:
             PingCmd = 'ping -c 3 ' + deviceIp
             pingResult = subprocess.check_output(PingCmd, shell=True).decode()
-            # device unreachable
-            if pingResult.find('Unreachable') == -1:
-                return True
+            return True
+        # device unreachable
         except subprocess.CalledProcessError:
             return False
 
