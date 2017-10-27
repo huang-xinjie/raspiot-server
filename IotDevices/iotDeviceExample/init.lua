@@ -42,7 +42,7 @@ function buildJSON(ip, uuid)
     msgtable = {}
     msgtable.ip = ip
     msgtable.uuid = uuid
-    msgtable.device = "iotDeviceExamole"
+    msgtable.device = "iotDeviceExample"
     msgtable.identity = "device"
     msgtable.repository = "raspIot"
     msgtable.iotServer = "IotServerExample"
