@@ -152,12 +152,14 @@ class DeviceHandler(object):
     def pingDevice(self, deviceIp):
         if deviceIp is None:
             return False
-        PingCmd = 'ping -c 3 ' + deviceIp
-        pingResult = subprocess.check_output(PingCmd, shell=True).decode()
-        # device unreachable
-        if pingResult.find('Unreachable') == -1:
-            return True
-        return False
+        try:
+            PingCmd = 'ping -c 3 ' + deviceIp
+            pingResult = subprocess.check_output(PingCmd, shell=True).decode()
+            # device unreachable
+            if pingResult.find('Unreachable') == -1:
+                return True
+        except subprocess.CalledProcessError:
+            return False
 
 
     def setupIotServer(self, conn, recvdata):
