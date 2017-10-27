@@ -128,7 +128,7 @@ class DeviceHandler(object):
             TypeError: an error occurred accessing ping result in not utf-8 encoding
         '''
         while True:
-            time.sleep(10)  # 60 seconds
+            time.sleep(10)  # 10 seconds
             for iotServer in list(self.__onlineIotServerListDict.values()):
                 try:
                     deviceIp = iotServer.ip
@@ -146,7 +146,8 @@ class DeviceHandler(object):
                                 break
                         saveRoomContentToFile(roomContent)
                 except Exception as reason:
-                    print('Just use utf-8 coding and use English, please!')
+                    print(str(reason))
+                    # End threading
                     return
 
     def pingDevice(self, deviceIp):
