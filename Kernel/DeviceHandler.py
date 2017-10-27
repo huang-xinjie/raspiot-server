@@ -53,8 +53,9 @@ class DeviceHandler(object):
             'Device already exists.' or 'Add device succeed.'
         '''
         deviceUuid = device['uuid']
-        if self.__devicesUuidMapRoom.get(deviceUuid) is not None:
-            return 'Device already exists.'
+        checkRoomName = self.__devicesUuidMapRoom.get(deviceUuid)
+        if checkRoomName and checkRoomName != Unauthorized_devices:
+          return 'Device already exists.'
         self.__devicesUuidMapRoom[deviceUuid] = roomName
         room = self.IotManager.roomHandler.getRoomContent(roomName)
         devices = room['devices']
