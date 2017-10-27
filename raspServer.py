@@ -14,9 +14,16 @@ def relayByCloudServer():
     # for CloudServer authorized
     RaspServerIdentityJson = json.dumps({'identity': IDENTITY})
     sc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sc.connect(CLOUD_SERVER_ADDRESS)
-    sc.sendall(RaspServerIdentityJson.encode())
-    print('Connect cloud server finished.')
+    try:
+        sc.connect(CLOUD_SERVER_ADDRESS)
+        sc.sendall(RaspServerIdentityJson.encode())
+        print('Connect cloud server finished.')
+    except TimeoutError:
+        print('*********************************************')
+        print('* Connect cloud server timeout.             *')
+        print('* Please check network or the cloud server. *')
+        print('*********************************************')
+        return  # cloud service disable.
     while True:
         recvJson = sc.recv(BUFFSIZE).decode()
         if recvJson == 'Connect finished.' or recvJson == '':
