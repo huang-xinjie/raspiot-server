@@ -2,6 +2,7 @@ import os
 import json
 import time
 import shutil
+import platform
 import importlib
 import threading
 import subprocess
@@ -23,6 +24,7 @@ class DeviceHandler(object):
     '''
     __onlineIotServerListDict = dict()
     __devicesUuidMapRoom = dict()
+    PingCmd = None              # for check device alive
 
     def __init__(self, iotManager):
         ''' DeviceHandler initial
@@ -128,6 +130,11 @@ class DeviceHandler(object):
         Raisers:
             TypeError: an error occurred accessing ping result in not utf-8 encoding
         '''
+        systype = platform.system()
+        if systype == 'Windows':
+            DeviceHandler.PingCmd = 'ping -n 3 '
+        elif systype == 'Linux':
+            DeviceHandler.PingCmd = 'ping -c 3 '
         while True:
             time.sleep(10)  # 10 seconds
             for iotServer in list(self.__onlineIotServerListDict.values()):
@@ -154,9 +161,9 @@ class DeviceHandler(object):
     def pingDevice(self, deviceIp):
         if deviceIp is None:
             return False
+        pingCmd = DeviceHandler.PingCmd + deviceIp
         try:
-            PingCmd = 'ping -c 3 ' + deviceIp
-            pingResult = subprocess.check_output(PingCmd, shell=True).decode()
+            pingResult = subprocess.check_output(pingCmd, shell=True).decode()
             return True
         # device unreachable
         except subprocess.CalledProcessError:
