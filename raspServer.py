@@ -57,9 +57,10 @@ if __name__ == '__main__':
         ss.bind(("0.0.0.0", 22015))
         ss.listen(5)
     except OSError:
-        print('RaspServer is already started.')
+        print('raspServer has started, please check.')
         sys.exit(1)
 
+    print('raspServer is running.')
     threading.Thread(target=relayByCloudServer, args=()).start()
     while True:
         conn, addr = ss.accept()

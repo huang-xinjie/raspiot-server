@@ -15,6 +15,7 @@ class CmdParser:
     def setCommand(self, conn, target, value):
         target = target.split(':')
         if target[0] == 'room':
+            old, new = target[1], value
             pass
         elif target[0] == 'device':
             pass
@@ -41,8 +42,9 @@ class CmdParser:
     def addCommand(self, conn, target, value):
         target = target.split(':')
         if target[0] == 'room':
+            roomName = value
             roomHandler = self.IotManager.getRoomHandler()
-            conn.sendall(roomHandler.addRoom(value).encode())
+            conn.sendall(roomHandler.addRoom(roomName).encode())
         elif target[0] == 'device':
             deviceUuid = value
             roomName, deviceName = target[1].split('/')
@@ -82,6 +84,8 @@ class CmdParser:
     def buildJSON(self, roomName):
         deviceList = []
         roomContent = copy.deepcopy(self.IotManager.roomHandler.getRoomContent(roomName))
+        if not roomContent:
+            return []
         for d in roomContent['devices']:
             if d['status'] is True:
                 deviceAttribute = self.IotManager.deviceHandler.getDeviceAttributeByUuid(d['uuid'])
