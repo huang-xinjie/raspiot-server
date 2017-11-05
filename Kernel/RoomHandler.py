@@ -54,9 +54,9 @@ class RoomHandler:
             return 'Room already exists.'
         # Add new folder and initial
         os.makedirs(ROOM_PATH + roomName)
-        saveRoomContentToFile(buildNewRoomContentDict(roomName))
-        # Add new room information to IotManager's roomContentListDict
         roomContent = buildNewRoomContentDict(roomName)
+        saveRoomContentToFile(roomContent)
+        # Add new room information to IotManager's roomContentListDict
         if self.__roomContentListDict.get(roomName) is None:
             self.__roomContentListDict[roomName] = roomContent
         saveRoomListToFile(self.getRoomList())
@@ -78,7 +78,21 @@ class RoomHandler:
         return self.getRoomJsonList()
 
     def renameRoom(self, oldRoomName, newRoomName):
-        pass
+        '''
+            Rename the folder of the room
+            Rename Key of self.__roomContentListDict
+        '''
+        if os.path.exists(ROOM_PATH + oldRoomName):
+            if not os.path.exists(ROOM_PATH + newRoomName):
+                # rename folder
+                shutil.move(ROOM_PATH + oldRoomName, ROOM_PATH + newRoomName)
+                roomContent = self.__roomContentListDict[oldRoomName]
+                roomContent['name'] = newRoomName
+                self.__roomContentListDict[newRoomName] = roomContent
+                saveRoomContentToFile(roomContent)
+                self.__roomContentListDict.pop(oldRoomName)
+                saveRoomListToFile(self.getRoomList())
+
 
     def getRoomJsonList(self):
         ''' get room list which dumps by json'''

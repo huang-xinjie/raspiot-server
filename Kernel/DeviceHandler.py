@@ -22,7 +22,7 @@ class DeviceHandler(object):
     Attributes:
         All is private
     '''
-    __onlineIotServerListDict = dict()
+    __deviceUuidMapIotServer = dict()
     __devicesUuidMapRoom = dict()
     PingCmd = None              # for check device alive
 
@@ -65,6 +65,14 @@ class DeviceHandler(object):
         saveRoomContentToFile(room)
         return 'Add device succeed.'
 
+    def moveDevice(self, deviceUuid, newRoomName):
+        ''' moveDevice method
+        Args:
+            deviceUuid: uuid of the device which need to move
+            newRoomName: the new room that device will move to
+        '''
+        if self.__devicesUuidMapRoom.get(deviceUuid):
+            self.__devicesUuidMapRoom[deviceUuid] = newRoomName
 
     def getDeviceAttributeByUuid(self, uuid):
         '''getDeviceJsonByUuid method
@@ -74,9 +82,9 @@ class DeviceHandler(object):
         Returns:
             a dict of device's attribute
         '''
-        if self.__onlineIotServerListDict.get(uuid) is None:
+        if self.__deviceUuidMapIotServer.get(uuid) is None:
             return None
-        iotServer = self.__onlineIotServerListDict.get(uuid)
+        iotServer = self.__deviceUuidMapIotServer.get(uuid)
         try:
             attribute = iotServer.getDeviceAttribute()
         except Exception:
@@ -105,7 +113,7 @@ class DeviceHandler(object):
                     deviceUuid = room['devices'][index]['uuid']
                     break
 
-            iotServer = self.__onlineIotServerListDict[deviceUuid]
+            iotServer = self.__deviceUuidMapIotServer[deviceUuid]
             device = iotServer.getDeviceAttribute()
             for index in range(len(device['deviceContent'])):
                 if device['deviceContent'][index]['name'] == deviceContentName:
@@ -137,13 +145,13 @@ class DeviceHandler(object):
             DeviceHandler.PingCmd = 'ping -c 3 '
         while True:
             time.sleep(10)  # 10 seconds
-            for iotServer in list(self.__onlineIotServerListDict.values()):
+            for iotServer in list(self.__deviceUuidMapIotServer.values()):
                 try:
                     deviceIp = iotServer.ip
                     deviceUuid = iotServer.uuid
                     if self.pingDevice(deviceIp) is False:
                         del iotServer       # device unreachable, shut iotServer down
-                        self.__onlineIotServerListDict.pop(deviceUuid)    # iotServer offline
+                        self.__deviceUuidMapIotServer.pop(deviceUuid)    # iotServer offline
                         roomName = self.__devicesUuidMapRoom[deviceUuid]
                         roomContent = self.IotManager.roomHandler.getRoomContent(roomName)
                         for index in range(len(roomContent['devices'])):
@@ -234,8 +242,8 @@ class DeviceHandler(object):
 
             # instantiation
             iotServer = iotServerClass(ip, uuid, deviceName)
-            if self.__onlineIotServerListDict.get(uuid) is None:
-                self.__onlineIotServerListDict[uuid] = iotServer
+            if self.__deviceUuidMapIotServer.get(uuid) is None:
+                self.__deviceUuidMapIotServer[uuid] = iotServer
             
             if roomName == Unauthorized_devices:
                 deviceDict = buildNewDeviceDict(deviceName, uuid)
@@ -266,7 +274,7 @@ class DeviceHandler(object):
         return None
 
     def getDeviceIpByUuid(self, uuid):
-        iotServer = self.__onlineIotServerListDict.get(uuid)
+        iotServer = self.__deviceUuidMapIotServer.get(uuid)
         if iotServer is not None:
             return iotServer.ip
         else:

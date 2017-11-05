@@ -16,7 +16,14 @@ class CmdParser:
         target = target.split(':')
         if target[0] == 'room':
             old, new = target[1], value
-            pass
+            roomHandler = self.IotManager.getRoomHandler()
+            roomHandler.renameRoom(old, new)
+            roomContent = roomHandler.getRoomContent(new)
+            if not roomContent:
+                deviceHandler = self.IotManager.getDeviceHandler()
+                for d in roomContent['devices']:
+                    deviceHandler.moveDevice(d['uuid'], new)
+            conn.sendall('Rename succeed.'.encode())
         elif target[0] == 'device':
             pass
         elif target[0] == 'deviceContent':

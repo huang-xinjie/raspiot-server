@@ -35,7 +35,6 @@ def saveRoomContentToFile(roomContent):
         pickle.dump(roomContent, roomContentFileWb)
 
 
-
 def buildNewRoomContentDict(roomName):
     ''' build a room content by room content blueprint '''
     roomDict = {"name": roomName,
