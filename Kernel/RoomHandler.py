@@ -75,7 +75,7 @@ class RoomHandler:
             # delete room from roomContentListDict
             if self.__roomContentListDict.get(roomName) is not None:
                 self.__roomContentListDict.pop(roomName)
-        return self.getRoomJsonList()
+        return 'Delete room succeed'
 
     def renameRoom(self, oldRoomName, newRoomName):
         '''

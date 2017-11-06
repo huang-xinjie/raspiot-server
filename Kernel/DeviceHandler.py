@@ -74,6 +74,17 @@ class DeviceHandler(object):
         if self.__devicesUuidMapRoom.get(deviceUuid):
             self.__devicesUuidMapRoom[deviceUuid] = newRoomName
 
+    def moveAllDevice(self, oldRoomName, newRoomName):
+        '''moveAllDevice method
+        Args:
+            oldRoomName: roomName of devices those need to move
+            newRoomNAME: the new room that devices will move to
+        '''
+        roomContent = self.IotManager.roomHandler.getRoomContent(oldRoomName)
+        if not roomContent['devices']:
+            for d in roomContent['devices']:
+                self.moveDevice(d['uuid'], newRoomName)
+
     def getDeviceAttributeByUuid(self, uuid):
         '''getDeviceJsonByUuid method
         Args:
