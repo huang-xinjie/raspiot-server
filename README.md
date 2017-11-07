@@ -1,2 +1,2 @@
 ## raspiot
-RaspServer: response request form app and get response from IotServer
+raspServer: response request form app and get response from IotServer

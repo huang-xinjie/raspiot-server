@@ -81,7 +81,7 @@ class DeviceHandler(object):
             newRoomNAME: the new room that devices will move to
         '''
         roomContent = self.IotManager.roomHandler.getRoomContent(oldRoomName)
-        if roomContent and roomContent['devices']:
+        if roomContent:
             for d in roomContent['devices']:
                 self.moveDevice(d['uuid'], newRoomName)
 

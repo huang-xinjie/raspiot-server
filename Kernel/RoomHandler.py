@@ -57,7 +57,7 @@ class RoomHandler:
         roomContent = buildNewRoomContentDict(roomName)
         saveRoomContentToFile(roomContent)
         # Add new room information to IotManager's roomContentListDict
-        if self.__roomContentListDict.get(roomName) is None:
+        if not self.__roomContentListDict.get(roomName):
             self.__roomContentListDict[roomName] = roomContent
         saveRoomListToFile(self.getRoomList())
 
@@ -73,7 +73,7 @@ class RoomHandler:
             # delete the folder of the room
             shutil.rmtree(ROOM_PATH + roomName)
             # delete room from roomContentListDict
-            if self.__roomContentListDict.get(roomName) is not None:
+            if self.__roomContentListDict.get(roomName):
                 self.__roomContentListDict.pop(roomName)
         return 'Delete room succeed'
 
@@ -103,10 +103,7 @@ class RoomHandler:
     # basic functions
     def getRoomContent(self, roomName):
         ''' room content getter '''
-        if self.__roomContentListDict.get(roomName) is None:
-            return None
-        else:
-            return self.__roomContentListDict[roomName]
+        return self.__roomContentListDict.get(roomName)
 
     def getRoomContentListDict(self):
         return self.__roomContentListDict
