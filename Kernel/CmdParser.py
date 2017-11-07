@@ -93,7 +93,7 @@ class CmdParser:
     def buildJSON(self, roomName):
         deviceList = []
         roomContent = copy.deepcopy(self.IotManager.roomHandler.getRoomContent(roomName))
-        if not roomContent:
+        if not roomContent or not roomContent['devices']:
             return []
         for d in roomContent['devices']:
             if d['status'] is True:
