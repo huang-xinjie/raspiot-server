@@ -70,6 +70,14 @@ class CmdParser:
             conn.sendall('Done'.encode())
         elif target.split(':')[0] == 'device':
             roomName, deviceName = target.split(':')[1], value
+            roomHandler = self.IotManager.roomHandler
+            roomContent = roomHandler.getRoomContent(roomName)
+            if roomContent:
+                for d in roomContent['devices']:
+                    if d['name'] == deviceName:
+                        deviceHandler = self.IotManager.getDeviceHandler()
+                        deviceHandler.moveDevice(d['uuid'])
+                        break
         print("Finished.")
         conn.close()
 
@@ -92,12 +100,13 @@ class CmdParser:
 
     def buildJSON(self, roomName):
         deviceList = []
+        deviceHandler = self.IotManager.getDeviceHandler()
         roomContent = copy.deepcopy(self.IotManager.roomHandler.getRoomContent(roomName))
         if not roomContent:
             return json.dumps([])
         for d in roomContent['devices']:
             if d['status'] is True:
-                deviceAttribute = self.IotManager.deviceHandler.getDeviceAttributeByUuid(d['uuid'])
+                deviceAttribute = deviceHandler.getDeviceAttributeByUuid(d['uuid'])
                 # pop key: 'getter' or 'setter'
                 if deviceAttribute:
                     for deviceContent in deviceAttribute['deviceContent']:
