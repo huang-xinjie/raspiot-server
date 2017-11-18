@@ -15,16 +15,30 @@ class CmdParser:
 
     def setCommand(self, conn, target, value):
         target = target.split(':')
-        if target[0] == 'room':
+        if target[0] == 'room':         # room rename
             old, new = target[1], value
             roomHandler = self.IotManager.getRoomHandler()
             roomHandler.renameRoom(old, new)
             deviceHandler = self.IotManager.getDeviceHandler()
             deviceHandler.moveAllDevice(old, new)
             conn.sendall('Rename succeed.'.encode())
+
         elif target[0] == 'device':
-            pass
-        elif target[0] == 'deviceContent':
+            oldRoom, deviceName = target[1].split('/')
+            newRoom, newDeviceName = value.split('/')
+            if oldRoom == newRoom:      # device rename
+                pass
+            else:                       # device move
+                roomHandler = self.IotManager.getRoomHandler()
+                roomContent = roomHandler.getRoomContent(oldRoom)
+                if roomContent:
+                    for d in roomContent['devices']:
+                        if d['name'] == deviceName:
+                            deviceHandler = self.IotManager.getDeviceHandler()
+                            deviceHandler.moveDevice(d['uuid'], newRoom)
+                            break
+
+        elif target[0] == 'deviceContent':  # set deviceContent to new value
             roomName, deviceName, deviceContentName = target[1].split('/')
             deviceHandler = self.IotManager.getDeviceHandler()
             result = deviceHandler.setValueToDeviceContent(roomName, deviceName, deviceContentName, value)
@@ -34,12 +48,14 @@ class CmdParser:
 
     def	getCommand(self, conn, target, value):
         target = target.split(':')
-        if target[0] == 'server' and value == 'checkServices':
+        if target[0] == 'server' and value == 'checkServices':  # check services
             conn.sendall("raspServer is ready.".encode())
-        elif target[0] == 'room' and value == 'roomlist':
+
+        elif target[0] == 'room' and value == 'roomlist':       # get room list
             roomHandler = self.IotManager.getRoomHandler()
             conn.sendall(roomHandler.getRoomJsonList().encode())
-        elif target[0] == 'device' and value == 'devicelist':
+
+        elif target[0] == 'device' and value == 'devicelist':   # get device list
             sendJson = self.buildJSON(target[1])
             conn.sendall(sendJson.encode())
         print("Finished.")
@@ -47,11 +63,12 @@ class CmdParser:
 
     def addCommand(self, conn, target, value):
         target = target.split(':')
-        if target[0] == 'room':
+        if target[0] == 'room':             # add a new room
             roomName = value
             roomHandler = self.IotManager.getRoomHandler()
             conn.sendall(roomHandler.addRoom(roomName).encode())
-        elif target[0] == 'device':
+
+        elif target[0] == 'device':         # add a new device
             deviceUuid = value
             roomName, deviceName = target[1].split('/')
             deviceDict = buildNewDeviceDict(deviceName, deviceUuid)
@@ -61,22 +78,23 @@ class CmdParser:
         conn.close()
 
     def delCommand(self, conn, target, value):
-        if target.split(':')[0] == 'room':
+        if target.split(':')[0] == 'room':      # delete a room from home
             roomName = value
             roomHandler = self.IotManager.getRoomHandler()
             deviceHandler = self.IotManager.getDeviceHandler()
             roomHandler.delRoom(roomName)
             deviceHandler.moveAllDevice(roomName, Unauthorized_devices)
             conn.sendall('Done'.encode())
-        elif target.split(':')[0] == 'device':
+
+        elif target.split(':')[0] == 'device':  # delete a device from room and move to Unauthorized_devices
             roomName, deviceName = target.split(':')[1], value
-            roomHandler = self.IotManager.roomHandler
+            roomHandler = self.IotManager.getRoomHandler()
             roomContent = roomHandler.getRoomContent(roomName)
             if roomContent:
                 for d in roomContent['devices']:
                     if d['name'] == deviceName:
                         deviceHandler = self.IotManager.getDeviceHandler()
-                        deviceHandler.moveDevice(d['uuid'])
+                        deviceHandler.moveDevice(d['uuid'], Unauthorized_devices)
                         break
         print("Finished.")
         conn.close()
