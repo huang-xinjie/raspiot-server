@@ -26,14 +26,14 @@ class RoomHandler:
         and just about room
     '''
     # private
-    __roomContentListDict = dict()
+    __roomNameMapRoomContent = dict()
 
     def __init__(self):
         roomList = getRoomListFromFile()
         for room in roomList:
             roomContent = getRoomContentFromFile(room['name'])
             # All room content in roomContentListDict and set all devices' status to False
-            self.__roomContentListDict[room['name']] = roomContent
+            self.__roomNameMapRoomContent[room['name']] = roomContent
             for index in range(len(roomContent['devices'])):
                 roomContent['devices'][index]['status'] = False
 
@@ -56,8 +56,8 @@ class RoomHandler:
         roomContent = buildNewRoomContentDict(roomName)
         saveRoomContentToFile(roomContent)
         # Add new room information to IotManager's roomContentListDict
-        if not self.__roomContentListDict.get(roomName):
-            self.__roomContentListDict[roomName] = roomContent
+        if not self.__roomNameMapRoomContent.get(roomName):
+            self.__roomNameMapRoomContent[roomName] = roomContent
         saveRoomListToFile(self.getRoomList())
 
         return self.getRoomJsonList()
@@ -72,8 +72,8 @@ class RoomHandler:
             # delete the folder of the room
             shutil.rmtree(ROOM_PATH + roomName)
             # delete room from roomContentListDict
-            if self.__roomContentListDict.get(roomName):
-                self.__roomContentListDict.pop(roomName)
+            if self.__roomNameMapRoomContent.get(roomName):
+                self.__roomNameMapRoomContent.pop(roomName)
         return 'Delete room succeed'
 
     def renameRoom(self, oldRoomName, newRoomName):
@@ -85,11 +85,11 @@ class RoomHandler:
             if not os.path.exists(ROOM_PATH + newRoomName):
                 # rename folder
                 shutil.move(ROOM_PATH + oldRoomName, ROOM_PATH + newRoomName)
-                roomContent = self.__roomContentListDict[oldRoomName]
+                roomContent = self.__roomNameMapRoomContent[oldRoomName]
                 roomContent['name'] = newRoomName
-                self.__roomContentListDict[newRoomName] = roomContent
+                self.__roomNameMapRoomContent[newRoomName] = roomContent
                 saveRoomContentToFile(roomContent)
-                self.__roomContentListDict.pop(oldRoomName)
+                self.__roomNameMapRoomContent.pop(oldRoomName)
                 saveRoomListToFile(self.getRoomList())
 
 
@@ -102,15 +102,15 @@ class RoomHandler:
     # basic functions
     def getRoomContent(self, roomName):
         ''' room content getter '''
-        return self.__roomContentListDict.get(roomName)
+        return self.__roomNameMapRoomContent.get(roomName)
 
     def getRoomContentListDict(self):
-        return self.__roomContentListDict
+        return self.__roomNameMapRoomContent
 
 
     def getRoomList(self):
         ''' room list getter '''
-        roomList = copy.deepcopy(list(self.__roomContentListDict.values()))
+        roomList = copy.deepcopy(list(self.__roomNameMapRoomContent.values()))
         # roomList don't need devices' information
         for index in range(len(roomList)):
             roomList[index]['devices'] = []
@@ -123,7 +123,7 @@ class RoomHandler:
         # save room list
         saveRoomListToFile(self.getRoomList())
 
-        roomContentList = list(self.__roomContentListDict.values())
+        roomContentList = list(self.__roomNameMapRoomContent.values())
         for roomContent in roomContentList:
             saveRoomContentToFile(roomContent)
         print('Save finished.')

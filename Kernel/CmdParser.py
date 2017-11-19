@@ -10,6 +10,9 @@ from Kernel.GlobalConstant import Unauthorized_devices
 from UserConfig import IDENTITY
 
 class CmdParser:
+    '''CmdParser class
+    parse cmd from app and return result to app
+    '''
     def __init__(self, iotManager):
         self.IotManager = iotManager
 

@@ -65,16 +65,6 @@ class DeviceHandler(object):
         saveRoomContentToFile(room)
         return 'Add device succeed.'
 
-    def moveDevice(self, deviceUuid, newRoomName):
-        ''' moveDevice method
-        Args:
-            deviceUuid: uuid of the device which need to move
-            newRoomName: the new room that device will move to
-        '''
-        roomName = self.__devicesUuidMapRoom.get(deviceUuid)
-        if roomName:
-            self.__devicesUuidMapRoom[deviceUuid] = newRoomName
-
     def renameDevice(self, deviceUuid, newDeviceName):
         '''renameDevice method
         Args:
@@ -94,6 +84,15 @@ class DeviceHandler(object):
                     saveRoomContentToFile(roomContent)
                     break
 
+    def moveDevice(self, deviceUuid, newRoomName):
+        ''' moveDevice method
+        Args:
+            deviceUuid: uuid of the device which need to move
+            newRoomName: the new room that device will move to
+        '''
+        roomName = self.__devicesUuidMapRoom.get(deviceUuid)
+        if roomName:
+            self.__devicesUuidMapRoom[deviceUuid] = newRoomName
 
     def moveAllDevice(self, oldRoomName, newRoomName):
         '''moveAllDevice method
@@ -321,7 +320,7 @@ class DeviceHandler(object):
 
 def buildNewDeviceDict(deviceName, deviceUuid):
     ''' buildNewDeviceDict function
-    Build a device by a blueprint of device attribute 
+    Build a device by a blueprint of device attribute
 
     Args:
         deviceName: a str representing name of the device.
