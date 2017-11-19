@@ -71,8 +71,29 @@ class DeviceHandler(object):
             deviceUuid: uuid of the device which need to move
             newRoomName: the new room that device will move to
         '''
-        if self.__devicesUuidMapRoom.get(deviceUuid):
+        roomName = self.__devicesUuidMapRoom.get(deviceUuid)
+        if roomName:
             self.__devicesUuidMapRoom[deviceUuid] = newRoomName
+
+    def renameDevice(self, deviceUuid, newDeviceName):
+        '''renameDevice method
+        Args:
+            deviceUuid
+            newDeviceName
+        '''
+        iotServer = self.__deviceUuidMapIotServer.get(deviceUuid)
+        if iotServer:
+            iotServer.name = newDeviceName
+        roomName = self.__devicesUuidMapRoom.get(deviceUuid)
+        if roomName:
+            roomHandler = self.IotManager.getRoomHandler()
+            roomContent = roomHandler.getRoomContent(roomName)
+            for d in roomContent['devices']:
+                if d['uuid'] == deviceUuid:
+                    roomContent['devices']['name'] = newDeviceName
+                    saveRoomContentToFile(roomContent)
+                    break
+
 
     def moveAllDevice(self, oldRoomName, newRoomName):
         '''moveAllDevice method

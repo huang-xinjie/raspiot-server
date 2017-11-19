@@ -27,7 +27,7 @@ class CmdParser:
             newRoom, newDeviceName = value.split('/')
             deviceUuid = deviceHandler.getDeviceUuidByName(oldRoom, deviceName)
             if oldRoom == newRoom:      # device rename
-                pass
+                deviceHandler.renameDevice(deviceUuid, newDeviceName)
             else:                       # device move
                 deviceHandler.moveDevice(deviceUuid, newRoom)
         elif target[0] == 'deviceContent':  # set deviceContent to new value
@@ -119,7 +119,7 @@ class CmdParser:
                     deviceList.append(deviceAttribute)
                     continue
 
-            # elif d['status'] is False:
+            # elif not d['status']:
             d['status'] = False
             d['deviceContent'] = []
             deviceList.append(d)
