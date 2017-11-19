@@ -38,9 +38,8 @@ class RoomHandler:
                 roomContent['devices'][index]['status'] = False
 
         # for Unauthorized devices
-        if self.getRoomContent(Unauthorized_devices) is None:
+        if not self.getRoomContent(Unauthorized_devices):
             print(self.addRoom(Unauthorized_devices))
-        # threading.Thread(target=self.saveRoomListAndRoomContentToFileRegularly, args=()).start()
 
     def addRoom(self, roomName):
         '''
