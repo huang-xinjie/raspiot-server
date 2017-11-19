@@ -57,7 +57,7 @@ class DeviceHandler(object):
         deviceUuid = device['uuid']
         checkRoomName = self.__devicesUuidMapRoom.get(deviceUuid)
         if checkRoomName and checkRoomName != Unauthorized_devices:
-          return 'Device already exists.'
+            return 'Device already exists.'
         self.__devicesUuidMapRoom[deviceUuid] = roomName
         room = self.IotManager.roomHandler.getRoomContent(roomName)
         devices = room['devices']
@@ -198,7 +198,7 @@ class DeviceHandler(object):
 
     def IotServerSetter(self, conn, recvdata):
         ''' IotServerSetter method
-        Parser recvdata that from iot device to get ip、uuid、iotServer module、repository, etc.
+        Parser recvdata that from iot device to get ip, uuid, iotServer module, repository, etc.
         Get iotServer module from repository, and set it up, and add it to onlineIotServerListDict.
 
         Args:
@@ -214,8 +214,6 @@ class DeviceHandler(object):
 
         Raises:
             KeyError: an error occurred accessing recvdata's Key.
-            Exception: it maybe have a lot error.. because the recvdata maybe unqualified or unsafety.
-            I will solve, please later.
         '''
         ip = recvdata['ip']
         uuid = recvdata['uuid']
@@ -255,11 +253,11 @@ class DeviceHandler(object):
             iotServer = iotServerClass(ip, uuid, deviceName)
             if self.__deviceUuidMapIotServer.get(uuid) is None:
                 self.__deviceUuidMapIotServer[uuid] = iotServer
-            
+
             if roomName == Unauthorized_devices:
                 deviceDict = buildNewDeviceDict(deviceName, uuid)
                 deviceDict['status'] = True
-            
+
             # set status of this iotServer True
             devices = self.IotManager.roomHandler.getRoomContent(roomName)['devices']
 
@@ -273,6 +271,14 @@ class DeviceHandler(object):
             conn.close()
         except Exception as reason:
             print(__name__ +' Error: ' + str(reason))
+
+    def getDeviceUuidByName(self, roomName, deviceName):
+        roomHandler = self.IotManager.getRoomHandler()
+        roomContent = roomHandler.getRoomContent(roomName)
+        if roomContent:
+            for d in roomContent['devices']:
+                if d['name'] == deviceName:
+                    return d['uuid']
 
     def getDeviceNameByUuid(self, uuid):
         roomName = self.__devicesUuidMapRoom[uuid]
