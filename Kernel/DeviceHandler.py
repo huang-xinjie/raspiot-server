@@ -92,7 +92,14 @@ class DeviceHandler(object):
         '''
         roomName = self.__devicesUuidMapRoom.get(deviceUuid)
         if roomName:
-            self.__devicesUuidMapRoom[deviceUuid] = newRoomName
+            roomContent = self.IotManager.roomHandler.getRoomContent(roomName)
+            for index in range(len(roomContent['devices'])):
+                if deviceUuid == roomContent['devices'][index]['uuid']:
+                    device = roomContent['devices'][index]
+                    if self.addDevice(newRoomName, device) == 'Add device succeed.':
+                        roomContent['devices'].remove(device)
+                        saveRoomContentToFile(roomContent)
+                        self.__devicesUuidMapRoom[deviceUuid] = newRoomName
 
     def moveAllDevice(self, oldRoomName, newRoomName):
         '''moveAllDevice method
