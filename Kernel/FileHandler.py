@@ -1,4 +1,6 @@
+'''FileHandler.py
 
+'''
 import os
 import pickle
 from Kernel.GlobalConstant import ROOM_PATH
@@ -32,6 +34,8 @@ def getRoomContentFromFile(roomName):
 def saveRoomContentToFile(roomContent):
     ''' save room content to  Rooms/<roomname>/.roomContentFile.pkl '''
     roomContentFile = ROOM_PATH + roomContent['name'] + '/.roomContentFile.pkl'
+    if not os.path.exists(ROOM_PATH + roomContent['name']):
+        os.makedirs(ROOM_PATH + roomContent['name'])
     with open(roomContentFile, 'wb') as roomContentFileWb:
         pickle.dump(roomContent, roomContentFileWb)
 

@@ -65,8 +65,12 @@ if __name__ == '__main__':
     while True:
         conn, addr = ss.accept()
         print("connected by ", addr)
-        recvJson = conn.recv(BUFFSIZE).decode()
-        print(recvJson)
-        recvdata = json.loads(recvJson)
-        cmdParser.commandParser(conn, recvdata)
+        try:
+            recvJson = conn.recv(BUFFSIZE).decode()
+            print(recvJson)
+            recvdata = json.loads(recvJson)
+            cmdParser.commandParser(conn, recvdata)
+        except ValueError:
+            print('Json data error, connection is close.')
+            conn.close()
     ss.close()

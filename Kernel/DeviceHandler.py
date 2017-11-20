@@ -78,9 +78,9 @@ class DeviceHandler(object):
         if roomName:
             roomHandler = self.IotManager.getRoomHandler()
             roomContent = roomHandler.getRoomContent(roomName)
-            for d in roomContent['devices']:
-                if d['uuid'] == deviceUuid:
-                    roomContent['devices']['name'] = newDeviceName
+            for index in range(len(roomContent['devices'])):
+                if roomContent['devices'][index]['uuid'] == deviceUuid:
+                    roomContent['devices'][index]['name'] = newDeviceName
                     saveRoomContentToFile(roomContent)
                     break
 
