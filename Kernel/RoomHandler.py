@@ -32,10 +32,12 @@ class RoomHandler:
         roomList = getRoomListFromFile()
         for room in roomList:
             roomContent = getRoomContentFromFile(room['name'])
-            # All room content in roomContentListDict and set all devices' status to False
+            # All room content in roomContentListDict
+            # and set all devices' status to True
+            # and iotManager would check it's status
             self.__roomNameMapRoomContent[room['name']] = roomContent
             for index in range(len(roomContent['devices'])):
-                roomContent['devices'][index]['status'] = False
+                roomContent['devices'][index]['status'] = True
 
         # for Unauthorized devices
         if not self.getRoomContent(Unauthorized_devices):
@@ -74,6 +76,7 @@ class RoomHandler:
             # delete room from roomContentListDict
             if self.__roomNameMapRoomContent.get(roomName):
                 self.__roomNameMapRoomContent.pop(roomName)
+                saveRoomListToFile(self.getRoomList())
         return 'Delete room succeed'
 
     def renameRoom(self, oldRoomName, newRoomName):

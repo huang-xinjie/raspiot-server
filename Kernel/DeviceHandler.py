@@ -17,7 +17,7 @@ class DeviceHandler(object):
     and get a json contains device attribute for onLineIotServerListDict by device's uuid,
     and set device content to a new value, means control iot devices.
     and check those online devices is still aliving or not in a child thread,
-    and setup iotServer in a child tahread when a iot device access in.
+    and setup iotServer in a child thread when a iot device access in.
 
     Attributes:
         All is private
@@ -246,8 +246,8 @@ class DeviceHandler(object):
         uuid = recvdata['uuid']
         moduleName = className = recvdata['iotServer']
 
-        if self.__devicesUuidMapRoom.get(uuid) is None:
-            if UNAUTHORIZED_ACCESS_MODE is False:
+        if not self.__devicesUuidMapRoom.get(uuid):
+            if not UNAUTHORIZED_ACCESS_MODE:
                 # Add to list of Unauthorized devices
                 # self.devicesUuidMapRoom[uuid] = Unauthorized_devices
                 conn.sendall(json.dumps({'response':'Setup completed'}).encode()) # for the moment
@@ -268,7 +268,7 @@ class DeviceHandler(object):
 
         try:
             # get iotServer module from device's Repository
-            if os.path.exists('IotServer/' + moduleName + '.py') is False:
+            if not os.path.exists('IotServer/' + moduleName + '.py'):
                 IotServerFile = moduleName + '.py'
                 shutil.copyfile('Repository/' + IotServerFile, 'IotServer/' + IotServerFile)
             # import module from IotServer/
@@ -278,7 +278,7 @@ class DeviceHandler(object):
 
             # instantiation
             iotServer = iotServerClass(ip, uuid, deviceName)
-            if self.__deviceUuidMapIotServer.get(uuid) is None:
+            if not self.__deviceUuidMapIotServer.get(uuid):
                 self.__deviceUuidMapIotServer[uuid] = iotServer
 
             if roomName == Unauthorized_devices:
@@ -310,12 +310,14 @@ class DeviceHandler(object):
     def getDeviceNameByUuid(self, uuid):
         roomName = self.__devicesUuidMapRoom[uuid]
         room = self.IotManager.roomHandler.getRoomContent(roomName)
-        devices = room['devices']
-        for index in range(len(devices)):
-            if devices[index]['uuid'] == uuid:
-                deviceName = devices[index]['name']
-                return deviceName
-        return None
+        try:
+            devices = room['devices']
+            for index in range(len(devices)):
+                if devices[index]['uuid'] == uuid:
+                    deviceName = devices[index]['name']
+                    return deviceName
+        except Exception:
+            return None
 
     def getDeviceIpByUuid(self, uuid):
         iotServer = self.__deviceUuidMapIotServer.get(uuid)
