@@ -7,9 +7,7 @@
 import os
 import copy
 import json
-import time
 import shutil
-import threading
 from Kernel.GlobalConstant import ROOM_PATH
 from Kernel.GlobalConstant import Unauthorized_devices
 from Kernel.FileHandler import saveRoomListToFile
