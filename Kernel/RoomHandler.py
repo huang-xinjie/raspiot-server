@@ -9,7 +9,7 @@ import copy
 import json
 import shutil
 from Kernel.GlobalConstant import ROOM_PATH
-from Kernel.GlobalConstant import Unauthorized_devices
+from Kernel.GlobalConstant import Ungrouped_devices
 from Kernel.FileHandler import saveRoomListToFile
 from Kernel.FileHandler import getRoomListFromFile
 from Kernel.FileHandler import saveRoomContentToFile
@@ -38,8 +38,8 @@ class RoomHandler:
                 roomContent['devices'][index]['status'] = True
 
         # for Unauthorized devices
-        if not self.getRoomContent(Unauthorized_devices):
-            print(self.addRoom(Unauthorized_devices))
+        if not self.getRoomContent(Ungrouped_devices):
+            print(self.addRoom(Ungrouped_devices))
 
     def addRoom(self, roomName):
         '''

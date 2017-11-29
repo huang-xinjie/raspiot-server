@@ -6,7 +6,7 @@ import json
 import datetime
 from Kernel.DeviceHandler import buildNewDeviceDict
 from Kernel.GlobalConstant import DEFAULT_IDENTITY
-from Kernel.GlobalConstant import Unauthorized_devices
+from Kernel.GlobalConstant import Ungrouped_devices
 from UserConfig import IDENTITY
 
 class CmdParser:
@@ -72,7 +72,7 @@ class CmdParser:
         deviceHandler = self.IotManager.getDeviceHandler()
         if target.split(':')[0] == 'room':      # delete a room from home
             roomName = value
-            deviceHandler.moveAllDevice(roomName, Unauthorized_devices)
+            deviceHandler.moveAllDevice(roomName, Ungrouped_devices)
             conn.sendall('Done'.encode())
             roomHandler = self.IotManager.getRoomHandler()
             roomHandler.delRoom(roomName)
@@ -81,7 +81,7 @@ class CmdParser:
         elif target.split(':')[0] == 'device':
             roomName, deviceName = target.split(':')[1], value
             deviceUuid = deviceHandler.getDeviceUuidByName(roomName, deviceName)
-            deviceHandler.moveDevice(deviceUuid, Unauthorized_devices)
+            deviceHandler.moveDevice(deviceUuid, Ungrouped_devices)
         print("Finished.")
         conn.close()
 
