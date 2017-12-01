@@ -1,4 +1,4 @@
--- ds18b20_init.lua
+-- dht11_init.lua
 station_config = {}
 station_config.ssid = "raspiot_0x0001"
 station_config.pwd = "rasp_Iot"

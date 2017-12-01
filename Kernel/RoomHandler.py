@@ -35,7 +35,7 @@ class RoomHandler:
             # and iotManager would check it's status
             self.__roomNameMapRoomContent[room['name']] = roomContent
             for index in range(len(roomContent['devices'])):
-                roomContent['devices'][index]['status'] = True
+                roomContent['devices'][index]['status'] = False
 
         # for Unauthorized devices
         if not self.getRoomContent(Ungrouped_devices):
