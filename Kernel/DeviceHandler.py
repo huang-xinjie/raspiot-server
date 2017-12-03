@@ -14,6 +14,7 @@ import threading
 import subprocess
 from Kernel.FileHandler import saveRoomContentToFile
 from Kernel.GlobalConstant import Ungrouped_devices
+from Kernel.GlobalConstant import ROOM_PATH
 from UserConfig import UNAUTHORIZED_ACCESS_MODE
 
 
@@ -274,14 +275,14 @@ class DeviceHandler(object):
             # search which room it's belong to
             roomName = self.__devicesUuidMapRoom[uuid]
             deviceName = self.getDeviceNameByUuid(uuid)
-
         try:
             # get iotServer module from device's Repository
-            if not os.path.exists('IotServer/' + moduleName + '.py'):
-                IotServerFile = moduleName + '.py'
-                shutil.copyfile('Repository/' + IotServerFile, 'IotServer/' + IotServerFile)
+            IotServerFile = moduleName + '.py'
+            IotServerPath = ROOM_PATH + roomName + '/' + IotServerFile
+            if not os.path.exists(IotServerPath):
+                shutil.copyfile('Repository/' + IotServerFile, IotServerPath)
             # import module from IotServer/
-            iotServerModule = importlib.import_module('IotServer.' + moduleName)
+            iotServerModule = importlib.import_module('Rooms.' + roomName + '.' + moduleName)
             # import class from module
             iotServerClass = getattr(iotServerModule, className)
 
