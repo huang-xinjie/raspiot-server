@@ -48,12 +48,12 @@ def relayByCloudServer():
             sc.sendall('Invalid json!'.encode())
             sc.close()
         sc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sc.connect(('www.raspIot.org', 22222))
+        sc.connect(('www.raspiot.org', 22222))
         sc.sendall(RaspServerIdentityJson.encode())
 
 if __name__ == '__main__':
+    ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         ss.bind(("0.0.0.0", 22015))
         ss.listen(5)
     except OSError:
@@ -67,8 +67,8 @@ if __name__ == '__main__':
         print("connected by ", addr)
         try:
             recvJson = conn.recv(BUFFSIZE).decode()
-            print(recvJson)
             recvdata = json.loads(recvJson)
+            print(recvdata)
             cmdParser.commandParser(conn, recvdata)
         except ValueError:
             print('Json data error, connection is close.')
