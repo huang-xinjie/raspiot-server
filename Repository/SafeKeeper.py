@@ -9,10 +9,14 @@ class SafeKeeper:
         self.ip = deviceIp
         self.uuid = deviceUuid
         self.name = deviceName
-        threading.Thread(target=self.connectWithDevice, args=()).start()
+
+    def getPicUrl(self):
+        self.connectWithDevice()
+        
 
     def getDeviceAttribute(self):
         try:
+            self.getPicUrl()
             device = {}
             device['uuid'] = self.uuid
             device['name'] = self.name
@@ -36,18 +40,20 @@ class SafeKeeper:
 
             device['deviceContent'] = deviceContent
             return device
-        except Exception:
+        except Exception as reason:
+            print(str(reason))
             return None
 
     def connectWithDevice(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(5)
         try:
             s.connect((self.ip, 18085))
             s.sendall('SafeKeeper'.encode())
             s.sendall('getUrl'.encode())
             recvdata = s.recv(1024).decode()
             if recvdata != 'NULL':
-                SafeKeeper.picUrl = recvdata.decode()
+                SafeKeeper.picUrl = recvdata
             else:
                 SafeKeeper.picUrl = None
         finally:
