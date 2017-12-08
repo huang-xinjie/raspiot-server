@@ -46,7 +46,7 @@ function buildJSON(ip, uuid)
     msgtable.uuid = uuid
     msgtable.device = "dht11"
     msgtable.identity = "device"
-    msgtable.repository = "raspIot"
+    msgtable.repository = "raspiot"
     msgtable.iotServer = "DHT11"
     
     ok, json = pcall(sjson.encode, msgtable)
