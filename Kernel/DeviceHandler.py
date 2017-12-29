@@ -13,7 +13,7 @@ import importlib
 import threading
 import subprocess
 from Kernel.FileHandler import saveRoomContentToFile
-from Kernel.GlobalConstant import Ungrouped_devices
+from Kernel.GlobalConstant import MY_DEVICES
 from Kernel.GlobalConstant import ROOM_PATH
 from UserConfig import UNAUTHORIZED_ACCESS_MODE
 
@@ -63,7 +63,7 @@ class DeviceHandler(object):
         '''
         deviceUuid = device['uuid']
         checkRoomName = self.__devicesUuidMapRoom.get(deviceUuid)
-        if checkRoomName and checkRoomName != Ungrouped_devices:
+        if checkRoomName and checkRoomName != MY_DEVICES:
             return 'Device already exists.'
         self.__devicesUuidMapRoom[deviceUuid] = roomName
         room = self.IotManager.roomHandler.getRoomContent(roomName)
@@ -266,7 +266,7 @@ class DeviceHandler(object):
                 conn.close()
                 return
             else:
-                roomName = Ungrouped_devices
+                roomName = MY_DEVICES
                 deviceName = recvdata['device'] + '_' + uuid.replace(':', '')[-4:]
                 device = buildNewDeviceDict(deviceName, uuid)
                 # add unauthorized devices to their room
@@ -291,7 +291,7 @@ class DeviceHandler(object):
             if not self.__deviceUuidMapIotServer.get(uuid):
                 self.__deviceUuidMapIotServer[uuid] = iotServer
 
-            if roomName == Ungrouped_devices:
+            if roomName == MY_DEVICES:
                 deviceDict = buildNewDeviceDict(deviceName, uuid)
                 deviceDict['status'] = True
 
