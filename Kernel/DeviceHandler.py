@@ -15,7 +15,6 @@ import subprocess
 from Kernel.FileHandler import saveRoomContentToFile
 from Kernel.GlobalConstant import MY_DEVICES
 from Kernel.GlobalConstant import ROOM_PATH
-from UserConfig import UNAUTHORIZED_ACCESS_MODE
 
 
 class DeviceHandler(object):
@@ -257,7 +256,8 @@ class DeviceHandler(object):
         moduleName = className = recvdata['iotServer']
 
         if not self.__devicesUuidMapRoom.get(uuid):
-            if not UNAUTHORIZED_ACCESS_MODE:
+            # if not UNAUTHORIZED_ACCESS_MODE:
+            if True:
                 # Add to list of Unauthorized devices
                 # self.devicesUuidMapRoom[uuid] = Unauthorized_devices
                 conn.sendall(json.dumps({'response':'Setup completed'}).encode()) # for the moment
