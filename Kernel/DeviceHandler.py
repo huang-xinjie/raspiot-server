@@ -256,21 +256,17 @@ class DeviceHandler(object):
         moduleName = className = recvdata['iotServer']
 
         if not self.__devicesUuidMapRoom.get(uuid):
-            # if not UNAUTHORIZED_ACCESS_MODE:
-            if True:
-                # Add to list of Unauthorized devices
-                # self.devicesUuidMapRoom[uuid] = Unauthorized_devices
-                conn.sendall(json.dumps({'response':'Setup completed'}).encode()) # for the moment
-                print('Unauthorized devices: ' + uuid + ' is rejected to access in.')
-                print("Finished.")
-                conn.close()
-                return
-            else:
-                roomName = MY_DEVICES
-                deviceName = recvdata['device'] + '_' + uuid.replace(':', '')[-4:]
-                device = buildNewDeviceDict(deviceName, uuid)
-                # add unauthorized devices to their room
-                print(self.addDevice(roomName, device))
+            # No UNAUTHORIZED_ACCESS_MODE: reject
+            conn.sendall(json.dumps({'response':'Setup completed'}).encode()) # for the moment
+            print('Unauthorized devices: ' + uuid + ' is rejected to access in.')
+            conn.close()
+            # save information of the unauthorized device
+            deviceName = recvdata['device'] + '_' + uuid.replace(':', '')[-4:]
+            deviceInfo = buildNewDeviceDict(deviceName, uuid)
+            msg = "An unauthorized device try to access in. This is its information: " + deviceInfo
+            print(msg)
+            print("Finished.")
+            return
         else:
             # search which room it's belong to
             roomName = self.__devicesUuidMapRoom[uuid]
