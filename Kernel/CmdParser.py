@@ -37,8 +37,6 @@ class CmdParser:
             roomName, deviceName, deviceContentName = target[1].split('/')
             result = deviceHandler.setValueToDeviceContent(roomName, deviceName, deviceContentName, value)
             conn.sendall(result.encode())
-        print("Finished.")
-        conn.close()
 
     def	getCommand(self, conn, target, value):
         target = target.split(':')
@@ -50,8 +48,7 @@ class CmdParser:
         elif target[0] == 'device' and value == 'devicelist':   # get device list
             sendJson = self.buildJSON(target[1])
             conn.sendall(sendJson.encode())
-        print("Finished.")
-        conn.close()
+
 
     def addCommand(self, conn, target, value):
         target = target.split(':')
@@ -65,8 +62,6 @@ class CmdParser:
             deviceDict = buildNewDeviceDict(deviceName, deviceUuid)
             deviceHandler = self.IotManager.getDeviceHandler()
             conn.sendall(deviceHandler.addDevice(roomName, deviceDict).encode())
-        print("Finished.")
-        conn.close()
 
     def delCommand(self, conn, target, value):
         deviceHandler = self.IotManager.getDeviceHandler()
@@ -81,9 +76,7 @@ class CmdParser:
         elif target.split(':')[0] == 'device':
             roomName, deviceName = target.split(':')[1], value
             deviceUuid = deviceHandler.getDeviceUuidByName(roomName, deviceName)
-            deviceHandler.moveDevice(deviceUuid, MY_DEVICES)
-        print("Finished.")
-        conn.close()
+            deviceHandler.delDevice(deviceUuid)
 
     def commandParser(self, conn, recvdata):
         if recvdata['identity'] == IDENTITY or recvdata['identity'] == DEFAULT_IDENTITY:
@@ -98,6 +91,8 @@ class CmdParser:
                 self.addCommand(conn, target, value)
             elif cmd == 'del':
                 self.delCommand(conn, target, value)
+            print("Finished.")
+            conn.close()
         elif recvdata['identity'] == 'device':
             self.IotManager.deviceHandler.setupIotServer(conn, recvdata)
 

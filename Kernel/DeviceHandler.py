@@ -121,6 +121,23 @@ class DeviceHandler(object):
             for d in roomContent['devices']:
                 self.moveDevice(d['uuid'], newRoomName)
 
+    def delDevice(self, deviceUuid):
+        ''' delDevice method
+        Args:
+            deviceUuid: uuid of the device which will be delete
+        '''
+        roomName = self.__devicesUuidMapRoom.get(deviceUuid)
+        if roomName:
+            roomContent = self.IotManager.roomHandler.getRoomContent(roomName)
+            for index in range(len(roomContent['devices'])):
+                print(roomContent['devices'][index])
+                if deviceUuid == roomContent['devices'][index]['uuid']:
+                    device = roomContent['devices'][index]
+                    self.__devicesUuidMapRoom.pop(deviceUuid)
+                    roomContent['devices'].remove(device)
+                    saveRoomContentToFile(roomContent)
+                    break
+
     def getDeviceAttributeByUuid(self, uuid):
         '''getDeviceJsonByUuid method
         Args:
