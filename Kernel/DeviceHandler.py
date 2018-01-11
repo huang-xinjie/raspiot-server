@@ -60,7 +60,7 @@ class DeviceHandler(object):
             A str contains the result of add device succeed or not.
             'Device already exists.' or 'Add device succeed.'
         '''
-        deviceUuid = device['uuid']
+        deviceUuid = device['uuid'].upper()
         checkRoomName = self.__devicesUuidMapRoom.get(deviceUuid)
         if checkRoomName and checkRoomName != MY_DEVICES:
             return 'Device already exists.'
@@ -280,7 +280,7 @@ class DeviceHandler(object):
             # save information of the unauthorized device
             deviceName = recvdata['device'] + '_' + uuid.replace(':', '')[-4:]
             deviceInfo = buildNewDeviceDict(deviceName, uuid)
-            msg = "An unauthorized device try to access in. This is its information: " + deviceInfo
+            msg = "An unauthorized device try to access in.\nThis is its information: " + str(deviceInfo)
             print(msg)
             print("Finished.")
             return
