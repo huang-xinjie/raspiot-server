@@ -1,46 +1,37 @@
 import socket
 
-class DHT11:
-    temperature = ''
-    humidity = ''
 
+class DHT11:
     def __init__(self, deviceIp, deviceUuid, deviceName):
         self.ip = deviceIp
         self.uuid = deviceUuid
         self.name = deviceName
+        self.temperature = ''
+        self.humidity = ''
 
-    def getTempAndHumi(self):
-        recvdata = self.connectWithDevice('getTemp&Humi')
+    def get_temp_and_humi(self):
+        recvdata = self.connect_with_device('get_temp&Humi')
         self.temperature, self.humidity = recvdata.split('&')
 
-    def getDeviceAttribute(self):
+    def get_device_attribute(self):
         try:
-            self.getTempAndHumi()
+            self.get_temp_and_humi()
         except Exception:
             return None
 
-        device = {}
-        device['uuid'] = self.uuid
-        device['name'] = self.name
+        device = {'uuid': self.uuid, 'name': self.name}
 
         deviceContent = []
-        deviceContent1 = {}
-        deviceContent1['type'] = 'text'
-        deviceContent1['name'] = 'Temperature'
-        deviceContent1['value'] = self.temperature + '℃'
+        deviceContent1 = {'type': 'text', 'name': 'Temperature', 'value': self.temperature + '℃'}
 
-        deviceContent2 = {}
-        deviceContent2['type'] = 'text'
-        deviceContent2['name'] = 'Humidity'
-        deviceContent2['value'] = self.humidity + '%'
+        deviceContent2 = {'type': 'text', 'name': 'Humidity', 'value': self.humidity + '%'}
 
         deviceContent.append(deviceContent1)
         deviceContent.append(deviceContent2)
         device['deviceContent'] = deviceContent
         return device
 
-
-    def connectWithDevice(self, cmd):
+    def connect_with_device(self, cmd):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((self.ip, 8085))
         s.sendall(cmd.encode())

@@ -1,4 +1,4 @@
--- ds18b20_init.lua
+-- switch.lua
 station_config = {}
 station_config.ssid = "raspiot_0x0001"
 station_config.pwd = "rasp_Iot"
@@ -9,29 +9,31 @@ wifi.sta.config(station_config)
 wifi.sta.connect()
 
 tcpS = net.createServer(net.TCP, 10)
-sconn = nil
+pin = 3
+switchStatus = 'false'
+gpio.mode(pin, gpio.OUTPUT)
 
-function readout(temp)
-    for addr, temp in pairs(temp) do
-        sconn:send(temp .. '*C')
-    end
-    sconn = nil
+function getStatus()
+    return switchStatus
 end
 
-function getTemp(c)
-    pin = 3
-    sconn = c
-    t = require('ds18b20')
-    t:read_temp(readout, pin)
+function switch(command)
+    if command == "true" then
+        gpio.write(pin, gpio.HIGH)
+        switchStatus = 'true'
+    else
+        gpio.write(pin, gpio.LOW)
+        switchStatus = 'false'
+    end
+    return switchStatus
 end
 
 function sayHelloToManager(times)
     if times == 0 then
         return false
     end
-    json = buildJSON(wifi.sta.getip(), wifi.sta.getmac())
+    json = build_json(wifi.sta.getip(), wifi.sta.getmac())
     srv = net.createConnection(net.TCP, 0)
-    -- default manager port and ip
     srv:connect(22015, "192.168.17.1")
     srv:send(json)
     srv:on("receive", function(sck, c) 
@@ -45,14 +47,14 @@ function sayHelloToManager(times)
     end)
 end
 
-function buildJSON(ip, uuid)
+function build_json(ip, uuid)
     msgtable = {}
     msgtable.ip = ip
     msgtable.uuid = uuid
-    msgtable.device = "ds18b20"
+    msgtable.device = "smart fan"
     msgtable.identity = "device"
     msgtable.repository = "raspiot"
-    msgtable.iotServer = "DS18B20"
+    msgtable.iotServer = "SmartFan"
     
     ok, json = pcall(sjson.encode, msgtable)
     if ok then
@@ -78,10 +80,12 @@ if tcpS then
     tcpS:listen(8085, function(conn)
         conn:on("receive", function(c, data)
             print(data)
-            if data == 'getTemp' then
-                getTemp(c)
-            elseif data == 'Reset' then
+            if data == 'Reset' then
                 node.restart()
+            elseif data == 'getStatus' then
+                c:send(getStatus())
+            else
+                c:send(switch(data))
             end
         end)
         conn:on("disconnection", function(c, d) print("disconnect") end)

@@ -1,7 +1,7 @@
 -- switch.lua
 station_config = {}
-station_config.ssid = "raspiot_0x0001"
-station_config.pwd = "rasp_Iot"
+station_config.ssid = "TP-LINK_2401"
+station_config.pwd = "mty2401123456"
 
 print('Setting up WIFI...')
 wifi.setmode(wifi.STATION)
@@ -32,9 +32,9 @@ function sayHelloToManager(times)
     if times == 0 then
         return false
     end
-    json = buildJSON(wifi.sta.getip(), wifi.sta.getmac())
+    json = build_json(wifi.sta.getip(), wifi.sta.getmac())
     srv = net.createConnection(net.TCP, 0)
-    srv:connect(22015, "192.168.17.1")
+    srv:connect(22015, "192.168.0.109")
     srv:send(json)
     srv:on("receive", function(sck, c) 
         print(c) 
@@ -47,7 +47,7 @@ function sayHelloToManager(times)
     end)
 end
 
-function buildJSON(ip, uuid)
+function build_json(ip, uuid)
     msgtable = {}
     msgtable.ip = ip
     msgtable.uuid = uuid
@@ -88,6 +88,9 @@ if tcpS then
                 c:send(switch(data))
             end
         end)
-        conn:on("disconnection", function(c, d) print("disconnect") end)
+        conn:on("disconnection", 
+                function(c, d) 
+                print("disconnect") 
+        end)
     end)
 end
