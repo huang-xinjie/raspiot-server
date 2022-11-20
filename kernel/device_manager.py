@@ -28,17 +28,17 @@ class DeviceHandler(object):
     Attributes:
         All is private
     """
-    PingCmd = None  # for check device alive
+    ping_cmd = None  # for check device alive
 
-    def __init__(self, iotManager):
+    def __init__(self, iot_manager):
         """ DeviceHandler initial
         Args:
-            iotManager: this object is one attribute of the iot_manager
+            iot_manager: this object is one attribute of the iot_manager
 
         Returns:
             None
         """
-        self.IotManager = iotManager
+        self.IotManager = iot_manager
         self.__device_uuid_map_iot_server = dict()
         self.__devices_uuid_map_room = dict()
         room_content_list = list(self.IotManager.room_handler.get_room_content_list_dict().values())
@@ -202,9 +202,9 @@ class DeviceHandler(object):
         """
         sys_type = platform.system()
         if sys_type == 'Windows':
-            DeviceHandler.PingCmd = 'ping -n 3 '
+            DeviceHandler.ping_cmd = 'ping -n 3 '
         elif sys_type == 'Linux':
-            DeviceHandler.PingCmd = 'ping -c 3 '
+            DeviceHandler.ping_cmd = 'ping -c 3 '
         while True:
             time.sleep(10)  # 10 seconds
             for iotServer in list(self.__device_uuid_map_iot_server.values()):
@@ -232,7 +232,7 @@ class DeviceHandler(object):
     def ping_device(device_ip):
         if device_ip is None:
             return False
-        ping_cmd = DeviceHandler.PingCmd + device_ip
+        ping_cmd = DeviceHandler.ping_cmd + device_ip
         try:
             subprocess.check_output(ping_cmd, shell=True)
             return True

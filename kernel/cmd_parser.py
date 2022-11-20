@@ -7,7 +7,7 @@ import datetime
 from kernel.device_manager import build_new_device_dict
 from common.constants import DEFAULT_IDENTITY
 from common.constants import MY_DEVICES
-from common.user_config import ACCOUNT
+from config.user import ACCOUNT
 
 
 class CmdParser:

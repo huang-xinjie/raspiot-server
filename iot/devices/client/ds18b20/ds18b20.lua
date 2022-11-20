@@ -50,10 +50,10 @@ local function to_string(addr, esc)
   end
 end
 
-local function readout(self)
+local function readout(cls)
   local next = false
-  local sens = self.sens
-  local temp = self.temp
+  local sens = cls.sens
+  local temp = cls.temp
   for i, s in ipairs(sens) do
     if status[i] == 1 then
       ow_reset(pin)
@@ -95,7 +95,7 @@ local function readout(self)
           elseif unit == 'K' then
             t = t + 27315/100
           end      
-          self.temp[addr]=t
+          cls.temp[addr]=t
           debugPrint(to_string(addr), t)
           status[i] = 2
         end
@@ -105,7 +105,7 @@ local function readout(self)
     next = next or status[i] == 0
   end
   if next then 
-    node_task_post(node_task_LOW_PRIORITY, function() return conversion(self) end)
+    node_task_post(node_task_LOW_PRIORITY, function() return conversion(cls) end)
   else
     --sens = {}
     if cb then
@@ -114,8 +114,8 @@ local function readout(self)
   end
 end
 
-local function conversion(self)
-  local sens = self.sens
+local function conversion(cls)
+  local sens = cls.sens
   local powered_only = true
   for _, s in ipairs(sens) do powered_only = powered_only and s:byte(9) ~= 1 end
   if powered_only then
@@ -137,14 +137,14 @@ local function conversion(self)
       end
     end
   end
-  tmr_create():alarm(750, tmr_ALARM_SINGLE, function() return readout(self) end)
+  tmr_create():alarm(750, tmr_ALARM_SINGLE, function() return readout(cls) end)
 end
 
-local function _search(self, lcb, lpin, search, save)
-  self.temp = {}
-  if search then self.sens = {}; status = {} end
-  local temp = self.temp
-  local sens = self.sens 
+local function _search(cls, lcb, lpin, search, save)
+  cls.temp = {}
+  if search then cls.sens = {}; status = {} end
+  local temp = cls.temp
+  local sens = cls.sens
   pin = lpin or pin
   
   local addr
@@ -207,9 +207,9 @@ local function _search(self, lcb, lpin, search, save)
   cycle()
 end
 
-local function read_temp(self, lcb, lpin, lunit, force_search, save_search)
+local function read_temp(cls, lcb, lpin, lunit, force_search, save_search)
   cb, unit = lcb, lunit or unit
-  _search(self, function() return conversion(self) end, lpin, force_search, save_search)
+  _search(cls, function() return conversion(cls) end, lpin, force_search, save_search)
 end
  
  -- Set module name as parameter of require and return module table
