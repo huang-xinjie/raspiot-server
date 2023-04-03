@@ -1,3 +1,6 @@
+from datetime import datetime
+
+
 def wrap_and_log_exception(func):
     def wrapped(*args, **kwargs):
         try:
@@ -7,3 +10,7 @@ def wrap_and_log_exception(func):
                   {'func': func.__name__, 'reason': e})
 
     return wrapped
+
+
+def time_now():
+    return datetime.now()

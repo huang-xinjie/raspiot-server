@@ -1,7 +1,9 @@
 import sys
 import json
 import socket
+import uvicorn
 import threading
+from log import log
 
 from api import service
 from common import constants
@@ -17,12 +19,9 @@ def relay_by_cloud_server(cmd_parser):
         try:
             sc.connect(user.CLOUD_SERVER_ADDRESS)
             sc.sendall(rasp_server_identity_json.encode())
-            print('Connect cloud server successfully.')
+            log.info('Connect cloud server successfully.')
         except Exception as e:
-            print('****************************************************')
-            print('* Error: Connect cloud server exception.           *')
-            print('* Reason: %-40s *' % str(e).strip())
-            print('****************************************************')
+            log.error('Connect cloud server failed: %s', str(e).strip())
             return
         recv_json = sc.recv(constants.BUFF_SIZE).decode()
         if recv_json == 'Connect finished.' or recv_json == '':
@@ -31,9 +30,9 @@ def relay_by_cloud_server(cmd_parser):
             sc.sendall('Roger.'.encode())
             continue
         elif recv_json == 'You need to log in.':
-            print('From raspCloud: ', recv_json)
+            log.info('From raspCloud: ', recv_json)
             return
-        print('From cloud: ', recv_json)
+        log.info('From cloud: ', recv_json)
         try:
             recv_data = json.loads(recv_json)
             cmd_parser.command_parser(sc, recv_data)
@@ -52,27 +51,28 @@ def house_keeper(cmd_parser):
 
     while True:
         conn, addr = ss.accept()
-        print("connected by ", addr)
+        log.info("connected by ", addr)
         try:
             recv_json = conn.recv(constants.BUFF_SIZE).decode()
             recv_data = json.loads(recv_json)
             print(recv_data)
             cmd_parser.command_parser(conn, recv_data)
         except ValueError:
-            print('Json data error, connection is close.')
+            log.error('Json data error, connection is close.')
             conn.close()
         except KeyboardInterrupt:
-            print('KeyboardInterrupt~')
+            log.error('KeyboardInterrupt~')
             ss.close()
             break
 
 
 if __name__ == '__main__':
-    print('raspServer is running.')
+    log.info('raspiot-server is running.')
     iot_manager = IotManager()
     cmd_parser = iot_manager.get_cmd_parser()
     threading.Thread(target=relay_by_cloud_server, args=(cmd_parser,)).start()
     threading.Thread(target=house_keeper, args=(cmd_parser,)).start()
 
-    api = service.create('default')
-    api.run(host='0.0.0.0', port=80)
+    fast_api, flask_api = service.create('default')
+    flask_api.run(host='0.0.0.0', port=80)
+    uvicorn.run(app=fast_api, host='0.0.0.0', port=8000)
