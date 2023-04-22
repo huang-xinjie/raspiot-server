@@ -1,23 +1,28 @@
 from flask import Flask
-from fastapi import FastAPI
 
-from api import raspiot
 from api import raspiot_api
 from config.api import app_config
-from db.sqlalchemy.models import db
+from db.sqlalchemy.models import db, RoleEnum
+from objects.role import Role, RoleList
+
+
+def init_db(app, app_db):
+    app_db.init_app(app)
+    with app.app_context():
+        app_db.create_all()
+
+        roles = RoleList.get_all()
+        created_roles = [role.name for role in roles]
+        for role in RoleEnum:
+            if role not in created_roles:
+                Role(name=role).create()
 
 
 def create(config_name):
-    api = FastAPI()
-    api.include_router(raspiot)
-
     app = Flask(__name__)
     app.config.from_object(app_config[config_name])
 
-    db.init_app(app)
-
+    init_db(app, db)
     app.register_blueprint(raspiot_api)
-    with app.app_context():
-        db.create_all()
 
-    return api, app
+    return app

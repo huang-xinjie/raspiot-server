@@ -8,9 +8,15 @@ class BaseObject(BaseModel):
     updated_at: datetime = None
     deleted_at: datetime = None
 
+    obj_what_changes: dict = {}
+
     @property
     def obj_name(self):
         return self.__name__
+
+    @classmethod
+    def obj_fields(cls):
+        return cls.__fields__
 
     @classmethod
     def _from_db_object(cls, obj_inst, db_inst, expected_attrs=None):
@@ -23,6 +29,7 @@ class BaseObject(BaseModel):
                 db_inst_dict.pop(field, None)
 
         obj_inst.update(db_inst_dict)
+        obj_inst.obj_what_changes.clear()
 
         return obj_inst
 
@@ -38,11 +45,11 @@ class BaseObject(BaseModel):
         return value != self.__fields__.get(field_name).default
 
     @staticmethod
-    def generate_uuid(key_word):
-        return str(uuid.uuid3(uuid.NAMESPACE_DNS, key_word))
+    def generate_uuid():
+        return str(uuid.uuid4())
 
     def get(self, key, default=None):
-        if not hasattr(self, key):
+        if key not in self.__fields__:
             raise AttributeError('%(cls_name)s object has no attribute %(field_name)s' %
                                  {'cls_name': self.__class__, 'field_name': key})
         else:
@@ -50,6 +57,12 @@ class BaseObject(BaseModel):
 
     def update(self, updated_dict=None, **kwargs):
         updated_dict = updated_dict or {}
-        for filed, value in {**updated_dict, **kwargs}.items():
-            if filed in self.__fields__:
-                setattr(self, filed, value)
+        for field, value in {**updated_dict, **kwargs}.items():
+            if field not in self.__fields__:
+                raise AttributeError('%(cls_name)s object has no attribute %(field_name)s' %
+                                     {'cls_name': self.__class__, 'field_name': field})
+            elif getattr(self, field) == value:
+                continue
+            else:
+                setattr(self, field, value)
+                self.obj_what_changes[field] = value

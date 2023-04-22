@@ -3,7 +3,6 @@ from flask import request
 from werkzeug import exceptions
 
 from log import log
-from api import raspiot
 from api import raspiot_api
 from common import utils
 from objects.room import Room, RoomList

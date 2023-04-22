@@ -1,7 +1,6 @@
 import sys
 import json
 import socket
-import uvicorn
 import threading
 from log import log
 
@@ -73,6 +72,5 @@ if __name__ == '__main__':
     threading.Thread(target=relay_by_cloud_server, args=(cmd_parser,)).start()
     threading.Thread(target=house_keeper, args=(cmd_parser,)).start()
 
-    fast_api, flask_api = service.create('default')
+    flask_api = service.create('default')
     flask_api.run(host='0.0.0.0', port=80)
-    uvicorn.run(app=fast_api, host='0.0.0.0', port=8000)

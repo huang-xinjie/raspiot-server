@@ -1,5 +1,52 @@
+from datetime import datetime
 from db.sqlalchemy import models
 from sqlalchemy.orm import subqueryload
+
+
+def create_role(values):
+    db_role = models.Role()
+    db_role.update({'name': values.get('name')})
+    models.db.session.add(db_role)
+    models.db.session.commit()
+
+    models.db.session.refresh(db_role)
+    return db_role
+
+
+def get_role_by_name(role_name):
+    role = models.Role.query.filter_by(name=role_name).options(subqueryload('users')).first()
+    return role
+
+
+def get_role_by_id(role_id):
+    role = models.Role.query.filter_by(id=role_id).options(subqueryload('users')).first()
+    return role
+
+
+def get_all_role():
+    role_list = models.Role.query.options(subqueryload('users')).all()
+    return role_list
+
+
+def _get_updated_values(model_cls, values):
+    updated_values = {}
+    for k, v in values.items():
+        if k in model_cls.db_update_fields():
+            updated_values[k] = v
+
+    return updated_values
+
+
+def update_role(role_id, values):
+    updated_values = _get_updated_values(models.Role, values)
+
+    models.Role.query.filter(models.Role.id == role_id).update(updated_values)
+    models.db.session.commit()
+
+
+def delete_role(role_id):
+    models.Role.query.filter(models.Role.id == role_id).delete()
+    models.db.session.commit()
 
 
 def create_user(values):
@@ -7,8 +54,8 @@ def create_user(values):
     db_user.update({'name': values.get('name'),
                     'uuid': values.get('uuid'),
                     'email': values.get('email'),
-                    'created_at': values.get('created_at'),
-                    'updated_at': values.get('updated_at')})
+                    'password_hash': values.get('password_hash'),
+                    'role_id': values.get('role_id')})
     models.db.session.add(db_user)
     models.db.session.commit()
 
@@ -32,20 +79,20 @@ def get_all_user():
 
 
 def update_user(user_id, values):
-    updated_values = {}
-    for k, v in values.items():
-        if k in models.User.db_update_fields:
-            updated_values[k] = v
+    updated_values = _get_updated_values(models.User, values)
 
     models.User.query.filter(models.User.id == user_id).update(updated_values)
     models.db.session.commit()
 
 
+def delete_user(user_id):
+    models.User.query.filter(models.User.id == user_id).delete()
+    models.db.session.commit()
+
+
 def create_room(values):
     db_room = models.Room()
-    db_room.update({'name': values.get('name'),
-                    'created_at': values.get('created_at'),
-                    'updated_at': values.get('updated_at')})
+    db_room.update({'name': values.get('name')})
     models.db.session.add(db_room)
     models.db.session.commit()
 
@@ -64,12 +111,14 @@ def get_all_room():
 
 
 def update_room(room_id, values):
-    updated_values = {}
-    for k, v in values.items():
-        if k in models.Room.db_update_fields:
-            updated_values[k] = v
+    updated_values = _get_updated_values(models.Room, values)
 
     models.Room.query.filter(models.Room.id == room_id).update(updated_values)
+    models.db.session.commit()
+
+
+def delete_room(room_id):
+    models.Room.query.filter(models.Room.id == room_id).delete()
     models.db.session.commit()
 
 
@@ -81,8 +130,7 @@ def create_device(values):
          'mac_addr': values.get('mac_addr'),
          'ipv4_addr': values.get('ipv4_addr'),
          'ipv6_addr': values.get('ipv6_addr'),
-         'status': values.get('status'),
-         'created_at': values.get('created_at')})
+         'status': values.get('status')})
     models.db.session.add(db_device)
     models.db.session.commit()
 
@@ -102,13 +150,50 @@ def get_device_by_mac_addr(mac_addr):
     return devices[0] if devices else None
 
 
-def update_device(uuid, values):
-    updated_values = {}
-    for k, v in values.items():
-        if k in models.Device.db_update_fields():
-            updated_values[k] = v
+def create_device_detail(values):
+    db_detail = models.DeviceDetail()
+    db_detail.update({'name': values['name'],
+                      'type': values['type'],
+                      'value': values['value'],
+                      'read_only': values.get('read_only'),
+                      'value_range': values.get('value_range'),
+                      'device_id': values['device_id']})
+    models.db.session.add(db_detail)
+    models.db.session.commit()
 
-    models.Device.query.filter(models.Device.uuid == uuid).update(updated_values)
+    return db_detail
+
+
+def _update_details_to_db(device_id, details):
+    if not details:
+        return
+
+    details_mapping = {d['name']: d for d in details}
+    device_details = models.db.session.query(models.DeviceDetail).filter_by(device_id=device_id)
+    exist_details = device_details.filter(models.DeviceDetail.name.in_(details_mapping.keys())).all()
+    # remove details
+    # device_details.filter(models.DeviceDetail.name.not_in(details_mapping.keys())).delete()
+
+    for db_detail in exist_details:
+        detail = details_mapping.pop(db_detail.name)
+        if db_detail.value != detail['value']:
+            db_detail.update({'value': detail['value']})
+
+    for _, detail in details_mapping.items():
+        detail['device_id'] = device_id
+        create_device_detail(detail)
+    models.db.session.commit()
+
+
+def update_device(uuid, values):
+    details = values.pop('details', None)
+    device = models.db.session.query(models.Device).filter_by(uuid=uuid).first()
+    if details:
+        _update_details_to_db(device.id, details)
+
+    updated_values = _get_updated_values(models.Device, values)
+    device.update(updated_values)
+
     models.db.session.commit()
 
 
@@ -123,10 +208,15 @@ def get_devices_by_filters(filters, sort_key='created_at', sort_dir='desc', limi
     if 'mac_addr' in filters:
         query_prefix = query_prefix.filter_by(mac_addr=filters.get('mac_addr'))
 
-    devices = query_prefix.all()
+    devices = query_prefix.order_by(sort_key).all()
     return devices
 
 
 def get_all_device():
     device_list = models.Device.query.all()
     return device_list
+
+
+def delete_device(device_id):
+    models.Device.query.filter(models.Device.id == device_id).delete()
+    models.db.session.commit()

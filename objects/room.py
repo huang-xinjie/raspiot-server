@@ -1,9 +1,7 @@
 from typing import List
-from datetime import datetime
 from pydantic import constr
 
 from objects.base import BaseObject
-from objects.device import Device
 from db.sqlalchemy import api as sqlalchemy_api
 
 
@@ -27,7 +25,7 @@ class Room(BaseObject):
 
     def create(self):
         if self.obj_field_is_set('id'):
-            raise AttributeError('%s already created.' % self.id)
+            raise AttributeError('%s already created.' % self.name)
         room = Room.get_by_name(self.name)
         if room is not None:
             raise ValueError('%s exists.' % self.name)
@@ -58,7 +56,7 @@ class Room(BaseObject):
         self._from_db_object(self, latest_db_room)
 
     def destroy(self):
-        pass
+        sqlalchemy_api.delete_room(self.id)
 
 
 class RoomList(object):

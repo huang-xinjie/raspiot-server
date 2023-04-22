@@ -1,9 +1,9 @@
-'''DeviceHandler
+"""DeviceHandler
    Add device
    del device
    move device
    rename device
-'''
+"""
 import os
 import json
 import time
