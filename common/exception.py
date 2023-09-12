@@ -1,3 +1,0 @@
-
-class DeviceError(Exception):
-    pass

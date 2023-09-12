@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from log import log
+import log
 
 
 def wrap_and_log_exception(func):
@@ -8,11 +8,12 @@ def wrap_and_log_exception(func):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            log.exception('occur exception while exec %(func)s: %(reason)s' %
-                          {'func': func.__name__, 'reason': e})
+            log.exception(f'occur exception while exec {func.__name__}: {e}')
 
     return wrapped
 
 
-def time_now():
-    return datetime.now()
+def is_exceeded(date_time, delta):
+    current_time = datetime.now()
+    time_diff = current_time - date_time
+    return time_diff > timedelta(seconds=delta)

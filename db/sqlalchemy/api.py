@@ -1,6 +1,27 @@
-from datetime import datetime
+import json
 from db.sqlalchemy import models
 from sqlalchemy.orm import subqueryload
+
+
+def _get_updated_values(model_cls, values):
+    updated_values = {}
+    for k, v in values.items():
+        if k in model_cls.db_update_fields():
+            updated_values[k] = v
+
+    return updated_values
+
+
+def _update_db_by_id(model_cls, db_id, values):
+    updated_values = _get_updated_values(model_cls, values)
+
+    model_cls.query.filter(model_cls.id == db_id).update(updated_values)
+    models.db.session.commit()
+
+
+def _destroy_by_id(model_cls, db_id):
+    model_cls.query.filter(model_cls.id == db_id).delete()
+    models.db.session.commit()
 
 
 def create_role(values):
@@ -28,15 +49,6 @@ def get_all_role():
     return role_list
 
 
-def _get_updated_values(model_cls, values):
-    updated_values = {}
-    for k, v in values.items():
-        if k in model_cls.db_update_fields():
-            updated_values[k] = v
-
-    return updated_values
-
-
 def update_role(role_id, values):
     updated_values = _get_updated_values(models.Role, values)
 
@@ -51,11 +63,8 @@ def delete_role(role_id):
 
 def create_user(values):
     db_user = models.User()
-    db_user.update({'name': values.get('name'),
-                    'uuid': values.get('uuid'),
-                    'email': values.get('email'),
-                    'password_hash': values.get('password_hash'),
-                    'role_id': values.get('role_id')})
+    db_user.update(_get_updated_values(models.User, values))
+    db_user.update({'uuid': values.get('uuid')})
     models.db.session.add(db_user)
     models.db.session.commit()
 
@@ -64,7 +73,8 @@ def create_user(values):
 
 
 def get_user_by_name(user_name):
-    user = models.User.query.filter_by(name=user_name).options(subqueryload('rooms')).first()
+    query_prefix = models.User.query.filter_by(name=user_name).options(subqueryload('rooms'))
+    user = query_prefix.options(subqueryload('role')).first()
     return user
 
 
@@ -122,15 +132,42 @@ def delete_room(room_id):
     models.db.session.commit()
 
 
+def create_mac_mapping(values):
+    db_mac_mapping = models.MacMapping()
+    db_mac_mapping.update(_get_updated_values(models.MacMapping, values))
+    models.db.session.add(db_mac_mapping)
+    models.db.session.commit()
+
+    models.db.session.refresh(db_mac_mapping)
+    return db_mac_mapping
+
+
+def get_mapping_by_mac_addr(mac_addr):
+    room = models.MacMapping.query.filter_by(mac_addr=mac_addr).first()
+    return room
+
+
+def get_all_mac_mapping():
+    room_list = models.MacMapping.query.all()
+    return room_list
+
+
+def update_mac_mapping(mapping_id, values):
+    updated_values = _get_updated_values(models.MacMapping, values)
+
+    models.Room.query.filter(models.MacMapping.id == mapping_id).update(updated_values)
+    models.db.session.commit()
+
+
+def delete_mac_mapping(mapping_id):
+    models.MacMapping.query.filter(models.MacMapping.id == mapping_id).delete()
+    models.db.session.commit()
+
+
 def create_device(values):
     db_device = models.Device()
-    db_device.update(
-        {'uuid': values.get('uuid'),
-         'name': values.get('name'),
-         'mac_addr': values.get('mac_addr'),
-         'ipv4_addr': values.get('ipv4_addr'),
-         'ipv6_addr': values.get('ipv6_addr'),
-         'status': values.get('status')})
+    db_device.update({'uuid': values.get('uuid')})
+    db_device.update(_get_updated_values(models.Device, values))
     models.db.session.add(db_device)
     models.db.session.commit()
 
@@ -150,46 +187,46 @@ def get_device_by_mac_addr(mac_addr):
     return devices[0] if devices else None
 
 
-def create_device_detail(values):
-    db_detail = models.DeviceDetail()
-    db_detail.update({'name': values['name'],
-                      'type': values['type'],
-                      'value': values['value'],
-                      'read_only': values.get('read_only'),
-                      'value_range': values.get('value_range'),
-                      'device_id': values['device_id']})
-    models.db.session.add(db_detail)
+def create_device_attr(values):
+    db_attr = models.DeviceAttr()
+    db_attr.update({'name': values['name']})
+    db_attr.update({'device_id': values['device_id']})
+    db_attr.update(_get_updated_values(models.DeviceAttr, values))
+    db_attr.update({'value_constraint': json.dumps(values.get('value_constraint'))})
+    models.db.session.add(db_attr)
     models.db.session.commit()
 
-    return db_detail
+    return db_attr
 
 
-def _update_details_to_db(device_id, details):
-    if not details:
+def _update_attrs_to_db(device_id, attrs):
+    if not attrs:
         return
 
-    details_mapping = {d['name']: d for d in details}
-    device_details = models.db.session.query(models.DeviceDetail).filter_by(device_id=device_id)
-    exist_details = device_details.filter(models.DeviceDetail.name.in_(details_mapping.keys())).all()
-    # remove details
-    # device_details.filter(models.DeviceDetail.name.not_in(details_mapping.keys())).delete()
-
-    for db_detail in exist_details:
-        detail = details_mapping.pop(db_detail.name)
-        if db_detail.value != detail['value']:
-            db_detail.update({'value': detail['value']})
-
-    for _, detail in details_mapping.items():
-        detail['device_id'] = device_id
-        create_device_detail(detail)
+    attrs_mapping = {d['name']: d for d in attrs}
+    device_attrs = models.db.session.query(models.DeviceAttr).filter_by(device_id=device_id)
+    exist_attrs = device_attrs.filter(models.DeviceAttr.name.in_(attrs_mapping.keys())).all()
+    # remove attrs
+    device_attrs.filter(models.DeviceAttr.name.not_in(attrs_mapping.keys())).delete()
+    # update attrs
+    for db_attr in exist_attrs:
+        attr = attrs_mapping.pop(db_attr.name)
+        attr['value_constraint'] = json.dumps(attr.get('value_constraint'))
+        for field in models.DeviceAttr.db_update_fields():
+            if getattr(db_attr, field) != attr.get(field):
+                db_attr.update({field: attr.get(field)})
+    # add attrs
+    for _, attr in attrs_mapping.items():
+        attr['device_id'] = device_id
+        create_device_attr(attr)
     models.db.session.commit()
 
 
 def update_device(uuid, values):
-    details = values.pop('details', None)
+    attrs = values.pop('attrs', None)
     device = models.db.session.query(models.Device).filter_by(uuid=uuid).first()
-    if details:
-        _update_details_to_db(device.id, details)
+    if attrs:
+        _update_attrs_to_db(device.id, attrs)
 
     updated_values = _get_updated_values(models.Device, values)
     device.update(updated_values)
@@ -200,15 +237,20 @@ def update_device(uuid, values):
 def get_devices_by_filters(filters, sort_key='created_at', sort_dir='desc', limit=None, marker=None):
     query_prefix = models.db.session.query(models.Device)
     if 'name' in filters:
-        query_prefix = query_prefix.filter_by(name=filters.get('name'))
+        query_prefix = query_prefix.filter_by(name=filters.pop('name'))
 
     if 'uuid' in filters:
-        query_prefix = query_prefix.filter_by(uuid=filters.get('uuid'))
+        query_prefix = query_prefix.filter_by(uuid=filters.pop('uuid'))
 
     if 'mac_addr' in filters:
-        query_prefix = query_prefix.filter_by(mac_addr=filters.get('mac_addr'))
+        query_prefix = query_prefix.filter_by(mac_addr=filters.pop('mac_addr'))
 
-    devices = query_prefix.order_by(sort_key).all()
+    if 'room' in filters:
+        room = get_room_by_name(filters.pop('room'))
+        room_id = room.id if room else -1
+        query_prefix = query_prefix.filter_by(room_id=room_id)
+
+    devices = query_prefix.options(subqueryload('attrs')).order_by(sort_key).all()
     return devices
 
 
@@ -218,5 +260,6 @@ def get_all_device():
 
 
 def delete_device(device_id):
+    models.DeviceAttr.query.filter(models.DeviceAttr.device_id == device_id).delete()
     models.Device.query.filter(models.Device.id == device_id).delete()
     models.db.session.commit()

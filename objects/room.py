@@ -25,10 +25,10 @@ class Room(BaseObject):
 
     def create(self):
         if self.obj_field_is_set('id'):
-            raise AttributeError('%s already created.' % self.name)
+            raise AttributeError(f'{self.name} already created.')
         room = Room.get_by_name(self.name)
         if room is not None:
-            raise ValueError('%s exists.' % self.name)
+            raise ValueError(f'{self.name} exists.')
 
         db_room = sqlalchemy_api.create_room(self)
         self._from_db_object(self, db_room)
@@ -43,7 +43,7 @@ class Room(BaseObject):
 
     def save(self):
         if not self.obj_field_is_set('id'):
-            raise AttributeError('room %s is not exists.' % self.name)
+            raise AttributeError(f'room {self.name} is not exists.')
 
         updated_value = {}
         for field in self.__fields__:

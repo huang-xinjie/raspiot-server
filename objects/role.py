@@ -23,10 +23,10 @@ class Role(BaseObject):
 
     def create(self):
         if self.obj_field_is_set('id'):
-            raise AttributeError('%s already created.' % self.name)
+            raise AttributeError(f'{self.name} already created.')
         role = Role.get_by_name(self.name)
         if role is not None:
-            raise ValueError('%s exists.' % self.name)
+            raise ValueError(f'{self.name} exists.')
 
         db_role = sqlalchemy_api.create_role(self)
         self._from_db_object(self, db_role)
@@ -49,7 +49,7 @@ class Role(BaseObject):
 
     def save(self):
         if not self.obj_field_is_set('id'):
-            raise AttributeError('role %s is not exists.' % self.name)
+            raise AttributeError(f'role {self.name} is not exists.')
 
         updated_value = {}
         for field in self.__fields__:

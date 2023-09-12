@@ -10,7 +10,7 @@ db = SQLAlchemy()
 
 class BaseModel(object):
     id = db.Column(db.Integer, unique=True, primary_key=True)
-    created_at = db.Column(db.DateTime, default=datetime.now())
+    created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, onupdate=datetime.now)
     deleted_at = db.Column(db.DateTime)
 
@@ -30,24 +30,45 @@ class Room(db.Model, BaseModel):
     __tablename__ = 'rooms'
 
     name = db.Column(db.String(64), unique=True)
-    updated_at = db.Column(db.DateTime, default=STANDARD_INITIAL_TIME)
     is_public = db.Column(db.Boolean, default=True)
+    updated_at = db.Column(db.DateTime, default=STANDARD_INITIAL_TIME, onupdate=datetime.now)
 
     devices = db.relationship('Device', backref='room')
     user_id = db.Column(db.String(36), db.ForeignKey('users.uuid'))
 
     @staticmethod
     def db_update_fields():
-        return ['name', 'user_id', 'is_public', 'updated_at', 'deleted_at']
+        return ['name', 'user_id', 'is_public']
 
     def __repr__(self):
-        return '<Room %r>' % self.name
+        return f'<Room {self.name}>'
+
+
+class MacMapping(db.Model, BaseModel):
+    __tablename__ = 'mac_mappings'
+
+    mac_addr = db.Column(db.String(18))
+    ipv4_addr = db.Column(db.String(16))
+    ipv6_addr = db.Column(db.String(40))
+
+    @staticmethod
+    def db_update_fields():
+        return ['mac_addr', 'ipv4_addr', 'ipv6_addr']
+
+    def __repr__(self):
+        return f'<MacMapping {self.mac_addr}>'
 
 
 @unique
 class DeviceStatus(str, Enum):
     online = 'online'
     offline = 'offline'
+
+
+@unique
+class DeviceSyncMode(str, Enum):
+    poll = 'poll'
+    report = 'report'
 
 
 @unique
@@ -63,51 +84,61 @@ class Device(db.Model, BaseModel):
 
     uuid = db.Column(db.String(36), nullable=False, unique=True)
     name = db.Column(db.String(64), nullable=False)
+
     mac_addr = db.Column(db.String(18))
     ipv4_addr = db.Column(db.String(16))
     ipv6_addr = db.Column(db.String(40))
     protocol = db.Column(db.Enum(DeviceProtocol))
     port = db.Column(db.Integer)
-    status = db.Column(db.Enum(DeviceStatus))
-    launched_at = db.Column(db.DateTime)
 
-    details = db.relationship('DeviceDetail', backref='device')
+    sync_mode = db.Column(db.Enum(DeviceSyncMode))
+    status = db.Column(db.Enum(DeviceStatus))
+    report_interval = db.Column(db.Integer)
+    reported_at = db.Column(db.DateTime)
+
+    attrs = db.relationship('DeviceAttr', backref='device')
     room_id = db.Column(db.Integer, db.ForeignKey('rooms.id'))
 
     @staticmethod
     def db_update_fields():
-        return ['name', 'status', 'updated_at', 'deleted_at', 'launched_at',
-                'ipv4_addr', 'ipv6_addr', 'protocol', 'port', 'details', 'room_id']
+        return ['name', 'status', 'sync_mode', 'reported_at', 'report_interval',
+                'mac_addr', 'ipv4_addr', 'ipv6_addr', 'protocol', 'port', 'attrs', 'room_id']
 
     def __repr__(self):
-        return '<Device %r>' % self.name
+        return f'<Device {self.name}>'
 
 
 @unique
-class DeviceDetailType(Enum):
+class DeviceAttrType(str, Enum):
+    url = 'url'
+    file = 'file'
     text = 'text'
-    switch = 'switch'
     image = 'image'
+    range = 'range'
     button = 'button'
+    switch = 'switch'
+    select = 'select'
+    stream = 'stream'
+    datetime = 'datetime'
 
 
-class DeviceDetail(db.Model, BaseModel):
-    __tablename__ = 'device_details'
+class DeviceAttr(db.Model, BaseModel):
+    __tablename__ = 'device_attrs'
 
     name = db.Column(db.String(64), nullable=False)
-    type = db.Column(db.Enum(DeviceDetailType), nullable=False)
+    type = db.Column(db.Enum(DeviceAttrType), nullable=False)
     value = db.Column(db.String(255), nullable=False)
+    value_constraint = db.Column(db.String(255))
     read_only = db.Column(db.Boolean, default=False)
-    value_range = db.Column(db.String(255))
 
     device_id = db.Column(db.Integer, db.ForeignKey('devices.id'))
 
     @staticmethod
     def db_update_fields():
-        return ['name', 'updated_at']
+        return ['type', 'value', 'read_only', 'value_constraint']
 
     def __repr__(self):
-        return '<DeviceDetail %r>' % self.name
+        return f'<DeviceAttr {self.name}>'
 
 
 class User(db.Model, BaseModel):
@@ -123,14 +154,14 @@ class User(db.Model, BaseModel):
 
     @staticmethod
     def db_update_fields():
-        return ['name', 'email', 'role_id', 'password_hash', 'updated_at', 'deleted_at']
+        return ['name', 'email', 'role_id', 'password_hash']
 
     @property
     def is_admin(self):
         return bool(self.role and self.role.is_admin)
 
     def __repr__(self):
-        return '<User %r>' % self.username
+        return f'<User {self.name}>'
 
 
 class RoleEnum(str, Enum):
@@ -150,4 +181,4 @@ class Role(db.Model, BaseModel):
         return self.name == RoleEnum.admin
 
     def __repr__(self):
-        return '<Role %r>' % self.name
+        return f'<Role {self.name}>'

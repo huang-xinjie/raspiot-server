@@ -15,6 +15,11 @@ class Config:
     RASPIOT_MAIN_SENDER = 'raspiot support <support@raspiot.org>'
     RASPIOT_ADMIN = 'support@raspiot.org'
 
+    DEFAULT_ROOM = 'my_devices'
+
+    UPLOAD_FOLDER = 'uploads'
+    UPLOAD_ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.mp4'}
+
     @staticmethod
     def init_app(app):
         pass

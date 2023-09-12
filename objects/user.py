@@ -47,13 +47,13 @@ class User(BaseObject):
 
     def create(self):
         if self.obj_field_is_set('id'):
-            raise AttributeError('%s already created.' % self.name)
+            raise AttributeError(f'{self.name} already created.')
         user = User.get_by_name(self.name)
         if user is not None:
-            raise ValueError('%s exists.' % self.name)
+            raise ValueError(f'{self.name} exists.')
         role = Role.get_by_name(self.role)
         if not role:
-            raise ValueError('role %s is not exists.' % self.role)
+            raise ValueError(f'role {self.role} is not exists.')
 
         values = {**self.dict(), **{'role_id': role.id}}
         db_user = sqlalchemy_api.create_user(values)
@@ -77,7 +77,7 @@ class User(BaseObject):
 
     def save(self):
         if not self.obj_field_is_set('id'):
-            raise AttributeError('user %s is not exists.' % self.name)
+            raise AttributeError(f'user {self.name} is not exists.')
 
         updated_value = {}
         for field in self.__fields__:
