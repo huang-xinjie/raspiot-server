@@ -7,9 +7,9 @@ def _attrs_view(attr_obj_list, exclude_keys=None):
     attr_list = []
     for attr_obj in attr_obj_list:
         attr_type = attr_obj.get('type')
-        attr_value = attr_obj.get('value')
+        attr_value = attr_obj.get('value', '')
         if attr_type == DeviceAttrType.switch and not isinstance(attr_value, bool):
-            attr_value = bool(attr_value == '1')
+            attr_value = bool(attr_value.lower() in ['1', 'true'])
         attr = dict(name=attr_obj.get('name'),
                     type=attr_type,
                     value=attr_value,
@@ -30,8 +30,9 @@ def device_view(device_obj, exclude_keys=None):
                        protocol=device_obj.get('protocol'),
                        port=device_obj.get('port'),
                        sync_mode=device_obj.get('sync_mode'),
+                       sync_interval=device_obj.get('sync_interval'),
                        attrs=_attrs_view(device_obj.get('attrs')),
-                       reported_at=str(device_obj.get('reported_at')),
+                       synced_at=str(device_obj.get('synced_at')),
                        created_at=str(device_obj.get('created_at')))
 
     if exclude_keys:

@@ -1,10 +1,14 @@
 from flask import Flask
 
+import objects
 from api import raspiot_api
 from config.api import app_config
 from db.sqlalchemy.models import db, RoleEnum
 from objects.role import Role, RoleList
 from objects.room import Room
+
+
+objects.register_all()
 
 
 def init_database(app, app_db):
@@ -25,7 +29,7 @@ def init_database(app, app_db):
 
 
 def create(config_mode='default', external_config=None, register_all=True):
-    app = Flask(__name__)
+    app = Flask('raspiot-server')
     app.config.from_object(app_config[config_mode])
     app.config.update(external_config or {})
     init_database(app, db)

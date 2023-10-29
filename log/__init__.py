@@ -8,6 +8,7 @@ import uuid
 import flask
 
 logging.basicConfig(level=logging.INFO,
+                    # filename='/var/log/raspiot/raspiot-server.log',
                     format='%(asctime)s %(levelname)s [pid:%(process)d] [tid:%(thread)d] %(message)s')
 
 

@@ -1,14 +1,16 @@
 from typing import List
+
 from pydantic import constr, root_validator
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from objects.role import Role
-from objects.base import BaseObject
 from db.sqlalchemy import api as sqlalchemy_api
 from db.sqlalchemy.models import RoleEnum
+from objects import base
+from objects.role import Role
 
 
-class User(BaseObject):
+@base.ObjectRegistry.register
+class User(base.BaseObject):
     id: int = None
     uuid: constr(max_length=36) = None
     name: constr(max_length=64) = None
@@ -29,7 +31,7 @@ class User(BaseObject):
 
     @property
     def password(self):
-        raise AttributeError('password is not a readable attribute.')
+        raise AttributeError('password is not a readable attribute')
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
@@ -47,13 +49,13 @@ class User(BaseObject):
 
     def create(self):
         if self.obj_field_is_set('id'):
-            raise AttributeError(f'{self.name} already created.')
+            raise AttributeError(f'{self.name} already created')
         user = User.get_by_name(self.name)
         if user is not None:
-            raise ValueError(f'{self.name} exists.')
+            raise ValueError(f'{self.name} exists')
         role = Role.get_by_name(self.role)
         if not role:
-            raise ValueError(f'role {self.role} is not exists.')
+            raise ValueError(f'role {self.role} is not exists')
 
         values = {**self.dict(), **{'role_id': role.id}}
         db_user = sqlalchemy_api.create_user(values)
@@ -77,13 +79,9 @@ class User(BaseObject):
 
     def save(self):
         if not self.obj_field_is_set('id'):
-            raise AttributeError(f'user {self.name} is not exists.')
+            raise AttributeError(f'user {self.name} is not exists')
 
-        updated_value = {}
-        for field in self.__fields__:
-            updated_value[field] = getattr(self, field)
-
-        sqlalchemy_api.update_user(self.id, updated_value)
+        sqlalchemy_api.update_user(self.id, self.obj_what_changes)
 
     def refresh(self):
         latest_db_user = sqlalchemy_api.get_user_by_name(self.name)
@@ -93,23 +91,15 @@ class User(BaseObject):
         sqlalchemy_api.delete_user(self.id)
 
 
-class UserList(object):
+@base.ObjectRegistry.register
+class UserList(base.BaseObjectList):
+    objects: List[User] = []
+
     @classmethod
     def get_all(cls):
         db_user_list = sqlalchemy_api.get_all_user()
-        return cls._make_user_list([], db_user_list)
+        return cls._make_list(cls(), db_user_list)
 
     def get_by_filters(self, filters):
         pass
 
-    def get_by_name(self, name):
-        filters = {'name': name}
-        self.get_by_filters(filters)
-
-    @staticmethod
-    def _make_user_list(users, db_user_list, expected_attrs=None):
-        for db_user in db_user_list:
-            user = User._from_db_object(User(), db_user)
-            users.append(user)
-
-        return users

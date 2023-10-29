@@ -2,21 +2,22 @@ import ipaddress
 import json
 import re
 from datetime import datetime
-from typing import List
+from typing import List, Union
 
-from pydantic import validator, constr
+from pydantic import validator, constr, conint
 
 from db.sqlalchemy import api as sqlalchemy_api
 from db.sqlalchemy.models import DeviceStatus, DeviceProtocol, DeviceAttrType, DeviceSyncMode
-from objects.base import BaseObject
+from objects import base
 
 
-class DeviceAttr(BaseObject):
+@base.ObjectRegistry.register
+class DeviceAttr(base.BaseObject):
     name: constr(max_length=64) = None
     type: DeviceAttrType = None
     value: constr(max_length=255) = None
     read_only: bool = False
-    value_constraint: constr(max_length=255) = None
+    value_constraint: Union[constr(max_length=255), dict] = None
 
     @classmethod
     def _from_db_object(cls, obj_inst, db_inst, expected_attrs=None):
@@ -25,8 +26,14 @@ class DeviceAttr(BaseObject):
         return obj_inst
 
 
-class Device(BaseObject):
-    id: int = None
+@base.ObjectRegistry.register
+class DeviceAttrList(base.BaseObjectList):
+    objects: List[DeviceAttr] = []
+
+
+@base.ObjectRegistry.register
+class Device(base.BaseObject):
+    id: conint(ge=1) = None
     uuid: constr(max_length=36) = None
     name: constr(max_length=64) = None
 
@@ -34,14 +41,14 @@ class Device(BaseObject):
     ipv4_addr: constr(max_length=16) = None
     ipv6_addr: constr(max_length=40) = None
     protocol: DeviceProtocol = None
-    port: int = None
+    port: conint(ge=1) = None
 
-    status: DeviceStatus = DeviceStatus.offline
-    sync_mode: DeviceSyncMode = DeviceSyncMode.poll
-    report_interval: int = 60 * 5
-    reported_at: datetime = None
+    status: DeviceStatus = None
+    sync_mode: DeviceSyncMode = None
+    sync_interval: conint(ge=1) = None
+    synced_at: datetime = None
 
-    attrs: List = []
+    attrs: DeviceAttrList = DeviceAttrList()
 
     class Config:
         orm_mode = True
@@ -50,10 +57,24 @@ class Device(BaseObject):
     @validator('mac_addr')
     def validate_mac_addr(cls, mac_addr):
         if not (mac_addr and re.match("[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", mac_addr.lower())):
-            raise ValueError(f"'{mac_addr}' is not a valid mac_addr.")
+            raise ValueError(f"'{mac_addr}' is invalid mac address")
 
         mac_addr = mac_addr.replace('-', ':')
         return mac_addr.lower()
+
+    @validator('sync_mode', 'sync_interval')
+    def validate_sync_fields(cls, value, field):
+        if field.name == 'sync_mode':
+            if value is not None and value not in DeviceSyncMode.__members__:
+                raise ValueError(f'{value} is invalid sync_mode({DeviceSyncMode.__members__})')
+            return value or DeviceSyncMode.poll
+
+        elif field.name == 'sync_interval':
+            if value is not None and \
+                    not (isinstance(value, int) and value > 0) and \
+                    not (isinstance(value, str) and value.isdigit() and int(value) > 0):
+                raise ValueError(f'{value} is not a valid positive integer')
+            return int(value or 60 * 5)  # default sync_interval
 
     @validator('ipv4_addr', 'ipv6_addr')
     def validate_ip_addr(cls, ip_addr, field):
@@ -63,25 +84,24 @@ class Device(BaseObject):
         ip = ipaddress.ip_address(ip_addr)
         if field.name == 'ipv4_addr' and ip.version != 4 or \
                 field.name == 'ipv6_addr' and ip.version != 6:
-            raise ValueError(f"'{ip_addr}' is not a valid {field.name}.")
+            raise ValueError(f"'{ip_addr}' is not a valid {field.name}")
         return ip_addr
 
     @classmethod
     def _from_db_object(cls, obj_inst, db_inst, expected_attrs=None):
-        obj_inst = super()._from_db_object(obj_inst, db_inst, expected_attrs)
-        obj_inst.attrs = [DeviceAttr._from_db_object(DeviceAttr(), attr)
-                          for attr in obj_inst.get('attrs', [])]
+        obj_inst.attrs = DeviceAttrList._make_list(DeviceAttrList(), db_inst.__dict__.pop('attrs', []))
+        obj_inst = super()._from_db_object(obj_inst, db_inst, expected_attrs=expected_attrs)
         obj_inst.obj_what_changes.clear()
         return obj_inst
 
     def create(self):
         if self.obj_field_is_set('id'):
-            raise AttributeError(f'device with id({self.id}) already created.')
+            raise AttributeError(f'device with id({self.id}) already created')
         device = Device.get_by_mac_addr(self.mac_addr)
         if device is not None:
-            raise AttributeError(f'{self.name} exists.')
+            raise AttributeError(f'{self.name} exists')
 
-        db_device = sqlalchemy_api.create_device(self)
+        db_device = sqlalchemy_api.create_device(self.to_primitive())
         self._from_db_object(self, db_device)
 
     @classmethod
@@ -129,7 +149,7 @@ class Device(BaseObject):
 
         self.status = DeviceStatus.online
         sqlalchemy_api.update_device(self.uuid, {'status': DeviceStatus.online,
-                                                 'reported_at': datetime.now()})
+                                                 'synced_at': datetime.now()})
 
     def offline(self):
         if self.status == DeviceStatus.offline:
@@ -139,32 +159,27 @@ class Device(BaseObject):
         sqlalchemy_api.update_device(self.uuid, {'status': DeviceStatus.offline})
 
     def save(self):
+        if not self.obj_field_is_set('id'):
+            raise AttributeError(f'device should create before save')
         sqlalchemy_api.update_device(self.uuid, self.obj_what_changes)
         self.obj_what_changes.clear()
 
     def destroy(self):
+        if not self.obj_field_is_set('id'):
+            raise AttributeError(f'unable to destroy {self.name} before create')
         sqlalchemy_api.delete_device(self.id)
 
 
-class DeviceList:
+@base.ObjectRegistry.register
+class DeviceList(base.BaseObjectList):
+    objects: List[Device] = []
+
     @classmethod
     def get_by_filters(cls, filters):
         db_devices = sqlalchemy_api.get_devices_by_filters(filters)
-        return cls._make_device_list([], db_devices)
+        return cls._make_list(cls(), db_devices)
 
     @classmethod
     def get_all(cls):
         db_device_list = sqlalchemy_api.get_all_device()
-        return cls._make_device_list([], db_device_list)
-
-    def get_by_name(self, name):
-        filters = {'name': name}
-        self.get_by_filters(filters)
-
-    @staticmethod
-    def _make_device_list(devices, db_device_list, expected_attrs=None):
-        for db_device in db_device_list:
-            device = Device._from_db_object(Device(), db_device, expected_attrs)
-            devices.append(device)
-
-        return devices
+        return cls._make_list(cls(), db_device_list)

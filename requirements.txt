@@ -1,0 +1,9 @@
+SQLAlchemy==2.0.21
+flask==2.2.5
+werkzeug==2.2.3
+pydantic==1.9.2
+requests==2.27.1
+Flask-SQLAlchemy==3.0.5
+ping3==4.0.4
+schedule==1.1.0
+scapy==2.4.5

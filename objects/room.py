@@ -1,16 +1,18 @@
 from typing import List
 from pydantic import constr
 
-from objects.base import BaseObject
+from objects import base
+from objects.device import Device
 from db.sqlalchemy import api as sqlalchemy_api
 
 
-class Room(BaseObject):
+@base.ObjectRegistry.register
+class Room(base.BaseObject):
     id: int = None
     name: constr(max_length=64) = None
     user_id: constr(max_length=36) = None
     is_public: bool = True
-    devices: List[str] = []
+    devices: List[Device] = []
 
     class Config:
         orm_mode = True
@@ -25,10 +27,10 @@ class Room(BaseObject):
 
     def create(self):
         if self.obj_field_is_set('id'):
-            raise AttributeError(f'{self.name} already created.')
+            raise AttributeError(f'{self.name} already created')
         room = Room.get_by_name(self.name)
         if room is not None:
-            raise ValueError(f'{self.name} exists.')
+            raise ValueError(f'{self.name} exists')
 
         db_room = sqlalchemy_api.create_room(self)
         self._from_db_object(self, db_room)
@@ -43,13 +45,9 @@ class Room(BaseObject):
 
     def save(self):
         if not self.obj_field_is_set('id'):
-            raise AttributeError(f'room {self.name} is not exists.')
+            raise AttributeError(f'room {self.name} is not exists')
 
-        updated_value = {}
-        for field in self.__fields__:
-            updated_value[field] = getattr(self, field)
-
-        sqlalchemy_api.update_room(self.id, updated_value)
+        sqlalchemy_api.update_room(self.id, self.obj_what_changes)
 
     def refresh(self):
         latest_db_room = sqlalchemy_api.get_room_by_name(self.name)
@@ -59,23 +57,14 @@ class Room(BaseObject):
         sqlalchemy_api.delete_room(self.id)
 
 
-class RoomList(object):
+@base.ObjectRegistry.register
+class RoomList(base.BaseObjectList):
+    objects: List[Room] = []
+
     @classmethod
     def get_all(cls):
         db_room_list = sqlalchemy_api.get_all_room()
-        return cls._make_room_list([], db_room_list)
+        return cls._make_list(cls(), db_room_list)
 
     def get_by_filters(self, filters):
         pass
-
-    def get_by_name(self, name):
-        filters = {'name': name}
-        self.get_by_filters(filters)
-
-    @staticmethod
-    def _make_room_list(rooms, db_room_list, expected_attrs=None):
-        for db_room in db_room_list:
-            room = Room._from_db_object(Room(), db_room)
-            rooms.append(room)
-
-        return rooms

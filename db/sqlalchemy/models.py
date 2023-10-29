@@ -3,8 +3,6 @@ from datetime import datetime
 
 from flask_sqlalchemy import SQLAlchemy
 
-from common.constants import STANDARD_INITIAL_TIME
-
 db = SQLAlchemy()
 
 
@@ -31,7 +29,7 @@ class Room(db.Model, BaseModel):
 
     name = db.Column(db.String(64), unique=True)
     is_public = db.Column(db.Boolean, default=True)
-    updated_at = db.Column(db.DateTime, default=STANDARD_INITIAL_TIME, onupdate=datetime.now)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.now)
 
     devices = db.relationship('Device', backref='room')
     user_id = db.Column(db.String(36), db.ForeignKey('users.uuid'))
@@ -90,18 +88,18 @@ class Device(db.Model, BaseModel):
     ipv6_addr = db.Column(db.String(40))
     protocol = db.Column(db.Enum(DeviceProtocol))
     port = db.Column(db.Integer)
+    sync_mode = db.Column(db.Enum(DeviceSyncMode), default=DeviceSyncMode.poll)
+    sync_interval = db.Column(db.Integer, default=60 * 5)
 
-    sync_mode = db.Column(db.Enum(DeviceSyncMode))
-    status = db.Column(db.Enum(DeviceStatus))
-    report_interval = db.Column(db.Integer)
-    reported_at = db.Column(db.DateTime)
+    status = db.Column(db.Enum(DeviceStatus), default=DeviceStatus.offline)
+    synced_at = db.Column(db.DateTime)
 
     attrs = db.relationship('DeviceAttr', backref='device')
     room_id = db.Column(db.Integer, db.ForeignKey('rooms.id'))
 
     @staticmethod
     def db_update_fields():
-        return ['name', 'status', 'sync_mode', 'reported_at', 'report_interval',
+        return ['name', 'status', 'sync_mode', 'synced_at', 'sync_interval',
                 'mac_addr', 'ipv4_addr', 'ipv6_addr', 'protocol', 'port', 'attrs', 'room_id']
 
     def __repr__(self):
@@ -123,7 +121,7 @@ class DeviceAttrType(str, Enum):
 
 
 class DeviceAttr(db.Model, BaseModel):
-    __tablename__ = 'device_attrs'
+    __tablename__ = 'device_details'
 
     name = db.Column(db.String(64), nullable=False)
     type = db.Column(db.Enum(DeviceAttrType), nullable=False)

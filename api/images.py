@@ -43,15 +43,19 @@ def upload_file():
             file.save(abs_filepath)
         return f'/uploads/{filename}'
 
-    raise exceptions.BadRequest(description=f'filename {file.filename} is invalid, only support {ALLOWED_EXTENSIONS}.')
+    raise exceptions.BadRequest(description=f'filename {file.filename} is invalid, '
+                                            f'only support {current_app.config["UPLOAD_ALLOWED_EXTENSIONS"]}')
 
 
 @raspiot_api.get('/uploads/<filename>')
 def uploaded_file(filename):
-    return send_from_directory(os.path.join('..', current_app.config['UPLOAD_FOLDER']), filename)
+    uploads_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                '..', current_app.config['UPLOAD_FOLDER'])
+    return send_from_directory(uploads_path, filename)
 
 
 @raspiot_api.get('/statics/<filename>')
 def statics_file(filename):
-    return send_from_directory(os.path.join('statics'), filename)
+    statics_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'statics')
+    return send_from_directory(statics_path, filename)
 

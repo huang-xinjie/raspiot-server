@@ -1,6 +1,6 @@
 
-class _Exception(Exception):
-    msg_fmt = 'An unknown exception occurred.'
+class BBaseException(Exception):
+    msg_fmt = 'An unknown exception occurred'
 
     def __init__(self, message=None, **kwargs):
         if not message:
@@ -18,22 +18,25 @@ class _Exception(Exception):
         return self.message
 
 
-class DeviceNotFound(_Exception):
-    msg_fmt = 'Device %(device_uuid)s not found.'
+class DeviceNotFound(BBaseException):
+    msg_fmt = 'Device %(device_uuid)s not found'
 
 
-class DeviceBasicAttributeError(_Exception):
-    msg_fmt = 'Device %(device_uuid)s basic attribute %(attribute)s is empty.'
+class DeviceBasicAttributeError(BBaseException):
+    msg_fmt = 'Device %(device_uuid)s basic attribute %(attribute)s is empty'
 
 
-class InvalidDeviceProtocol(_Exception):
-    msg_fmt = 'Invalid device protocol %(protocol)s.'
+class InvalidDeviceProtocol(BBaseException):
+    msg_fmt = 'Invalid device protocol %(protocol)s'
 
 
-class DeviceRemoteError(_Exception):
-    msg_fmt = 'Failed to handle remote device %(device_uuid)s: %(reason)s.'
+class DeviceRemoteError(BBaseException):
+    msg_fmt = 'Failed to handle remote device %(device_uuid)s: %(reason)s'
 
 
 class DeviceConnectTimeout(DeviceRemoteError):
-    msg_fmt = 'Connect device %(device_uuid)s timeout %(timeout)s.'
+    msg_fmt = 'Connect device %(device_uuid)s timeout %(timeout)s'
 
+
+class ObjectRegistryConflict(BBaseException):
+    msg_fmt = 'Object registry conflict %(class_name)s'

@@ -1,11 +1,12 @@
 from typing import List
 
-from objects.base import BaseObject
+from objects import base
 from db.sqlalchemy.models import RoleEnum
 from db.sqlalchemy import api as sqlalchemy_api
 
 
-class Role(BaseObject):
+@base.ObjectRegistry.register
+class Role(base.BaseObject):
     id: int = None
     name: RoleEnum = None
     users: List[str] = []
@@ -23,10 +24,10 @@ class Role(BaseObject):
 
     def create(self):
         if self.obj_field_is_set('id'):
-            raise AttributeError(f'{self.name} already created.')
+            raise AttributeError(f'{self.name} already created')
         role = Role.get_by_name(self.name)
         if role is not None:
-            raise ValueError(f'{self.name} exists.')
+            raise ValueError(f'{self.name} exists')
 
         db_role = sqlalchemy_api.create_role(self)
         self._from_db_object(self, db_role)
@@ -49,13 +50,9 @@ class Role(BaseObject):
 
     def save(self):
         if not self.obj_field_is_set('id'):
-            raise AttributeError(f'role {self.name} is not exists.')
+            raise AttributeError(f'role {self.name} is not exists')
 
-        updated_value = {}
-        for field in self.__fields__:
-            updated_value[field] = getattr(self, field)
-
-        sqlalchemy_api.update_role(self.id, updated_value)
+        sqlalchemy_api.update_role(self.id, self.obj_what_changes)
 
     def refresh(self):
         latest_db_role = sqlalchemy_api.get_role_by_name(self.name)
@@ -65,23 +62,14 @@ class Role(BaseObject):
         sqlalchemy_api.delete_role(self.id)
 
 
-class RoleList(object):
+@base.ObjectRegistry.register
+class RoleList(base.BaseObjectList):
+    objects: List[Role] = []
+
     @classmethod
     def get_all(cls):
         db_role_list = sqlalchemy_api.get_all_role()
-        return cls._make_role_list([], db_role_list)
+        return cls._make_list(cls(), db_role_list)
 
     def get_by_filters(self, filters):
         pass
-
-    def get_by_name(self, name):
-        filters = {'name': name}
-        self.get_by_filters(filters)
-
-    @staticmethod
-    def _make_role_list(roles, db_role_list, expected_attrs=None):
-        for db_role in db_role_list:
-            role = Role._from_db_object(Role(), db_role)
-            roles.append(role)
-
-        return roles

@@ -2,8 +2,8 @@ import multiprocessing
 
 import log
 from api import service
-from iot.api import DeviceManagerApi
-from iot.manager import DeviceManager
+from device.api import DeviceManagerApi
+from device.manager import DeviceManager
 
 
 def start_device_manager(manager_pipe):

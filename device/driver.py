@@ -59,18 +59,18 @@ class HttpDeviceDriver(DeviceDriver):
 
         device_addr = ':'.join(map(str, device.addr))
         device_endpoint = f'http://{device_addr}/attr'
-        body = {'name': attr, 'value': value}
-        headers = {'Content-Length': str(len(str(body)))}
+        headers = {'Content-Type': 'application/json'}
+        body = {'attr': attr, 'value': value}
         try:
             log.info(f'Set device {device.uuid} attrs: {body}')
             response = requests.put(device_endpoint, headers=headers, json=body, timeout=self.timeout)
+            if response.status_code != 200:
+                raise exceptions.DeviceRemoteError(f'response status code {response.status_code}')
+            return json.loads(response.text)
         except req_exc.ReadTimeout:
             raise exceptions.DeviceConnectTimeout(device_uuid=device.uuid, timeout=self.timeout)
         except Exception as e:
             raise exceptions.DeviceRemoteError(f'set device {device.uuid} attr {attr} to {value} failed: {e}')
-        else:
-            if response.status_code == 200:
-                return json.loads(response.text)
 
 
 class BleDeviceDriver(DeviceDriver, ABC):

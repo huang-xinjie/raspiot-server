@@ -6,7 +6,7 @@ import log
 from api import raspiot_api
 from api.views.devices import device_view, device_list_view
 from common import exceptions as exc
-from objects.device import Device, DeviceList
+from objects.device import Device, DeviceList, DeviceAttrList
 from objects.room import Room
 
 
@@ -26,28 +26,31 @@ def add_device():
     device_name = request.form.get('name')
     mac_addr = request.form.get('mac_addr')
     ipv4_addr = request.form.get('ipv4_addr')
+    ipv6_addr = request.form.get('ipv6_addr')
     protocol = request.form.get('protocol')
     port = request.form.get('port')
+    sync_mode = request.form.get('sync_mode')
+    sync_interval = request.form.get('sync_interval')
     room_name = request.form.get('room')
 
     try:
-        mac_addr = Device.validate_mac_addr(mac_addr)
-        device_manager_api = current_app.config.get('device_manager_api')
-        ipv4_addr = ipv4_addr or device_manager_api.get_ip_by_mac_addr(mac_addr)
         room_name = room_name or current_app.config['DEFAULT_ROOM']
         room = Room.get_by_name(room_name)
         if not room:
-            raise exceptions.NotFound(description=f'room {room_name} not found, must create a room before add device.')
+            raise exceptions.NotFound(description=f'room {room_name} not found, must create a room before add device')
 
         device = Device(uuid=Device.generate_uuid(), name=device_name,
-                        mac_addr=mac_addr, ipv4_addr=ipv4_addr, protocol=protocol, port=port)
+                        mac_addr=mac_addr, ipv4_addr=ipv4_addr, ipv6_addr=ipv6_addr,
+                        protocol=protocol, port=port, sync_mode=sync_mode, sync_interval=sync_interval)
         device.create()
         device.move_to(room)
-    except ValueError:
-        raise exceptions.BadRequest(description=f'mac_addr "{mac_addr}" is invalid.')
+    except ValidationError as e:
+        error_msg = '; '.join([f'{error["loc"][0]}: {error["msg"]}' for error in e.errors()])
+        log.error(error_msg)
+        raise exceptions.BadRequest(description=error_msg)
     except AttributeError as e:
         log.error(f'add device failed: {e}')
-        raise exceptions.BadRequest(description=f'device with mac addr ({mac_addr}) already exists.')
+        raise exceptions.BadRequest(description=f'device with mac addr ({mac_addr}) already exists')
     return device_view(device)
 
 
@@ -68,38 +71,38 @@ def update_device(uuid):
     expected_update_fields = {}
     device = Device.get_by_uuid(uuid)
     if not device:
-        raise exceptions.NotFound(description=f'device {uuid} not found.')
+        raise exceptions.NotFound(description=f'device {uuid} not found')
 
     allowed_update_fields = ['name', 'mac_addr', 'ipv4_addr', 'ipv6_addr', 'protocol', 'port']
     for field, target in request.form.items():
         if field in allowed_update_fields:
             expected_update_fields[field] = target
         else:
-            raise exceptions.BadRequest(description=f'Field {field} is not allowed to be updated.')
+            raise exceptions.BadRequest(description=f'Field {field} is not allowed to be updated')
 
     try:
         device.update(expected_update_fields)
         device.save()
     except ValidationError as e:
-        error_msg = ''.join([f'{error["loc"][0]}: {error["msg"]}' for error in e.errors()])
+        error_msg = '; '.join([f'{error["loc"][0]}: {error["msg"]}' for error in e.errors()])
         raise exceptions.BadRequest(description=error_msg)
 
     return device_view(device)
 
 
 @raspiot_api.get('/device/<uuid>')
-def get_device_attrs(uuid):
+def get_device_detail(uuid):
     realtime = request.args.get('realtime')
     device = Device.get_by_uuid(uuid)
     if not device:
-        raise exceptions.NotFound(description=f'device {uuid} not found.')
+        raise exceptions.NotFound(description=f'device {uuid} not found')
 
     try:
         realtime = str(realtime).lower() == 'true'
         if realtime or not device.attrs:
             device_manager_api = current_app.config.get('device_manager_api')
             attrs = device_manager_api.get_device_attrs(device)
-            device.update(attrs=attrs)
+            device.update(attrs=DeviceAttrList.from_primitive(attrs))
             device.online()
             device.save()
     except exc.DeviceBasicAttributeError as e:
@@ -115,7 +118,7 @@ def get_device_attrs(uuid):
 def set_device_attr(uuid):
     device = Device.get_by_uuid(uuid)
     if not device:
-        raise exceptions.NotFound(description=f'device {uuid} not found.')
+        raise exceptions.NotFound(description=f'device {uuid} not found')
 
     attr_name = request.form.get('attr')
     value = request.form.get('value')
@@ -123,14 +126,14 @@ def set_device_attr(uuid):
     for attr in device.attrs:
         if attr.name == attr_name:
             if attr.read_only:
-                raise exceptions.BadRequest(description=f'attr [{attr_name}] of device {uuid} is read_only.')
+                raise exceptions.BadRequest(description=f'attr [{attr_name}] of device {uuid} is read_only')
 
     try:
         device_manager_api = current_app.config.get('device_manager_api')
         attrs = device_manager_api.set_device_attr(device, attr_name, value)
     except exc.DeviceRemoteError as e:
         raise exceptions.BadHost(description=str(e))
-    device.update(attrs=attrs)
+    device.update(attrs=DeviceAttrList.from_primitive(attrs))
     device.save()
     return device_view(device)
 
@@ -139,34 +142,34 @@ def set_device_attr(uuid):
 def remove_device(uuid):
     device = Device.get_by_uuid(uuid)
     if not device:
-        raise exceptions.NotFound(description=f'device {uuid} not found.')
+        raise exceptions.NotFound(description=f'device {uuid} not found')
 
     device.destroy()
     return '', 204
 
 
 @raspiot_api.post('/device/report')
-def device_report():
+def report_device():
     mac_addr = request.form.get('mac_addr')
     device = Device.get_by_mac_addr(mac_addr)
     if not device:
-        raise exceptions.NotFound(description=f'device witch mac_addr {mac_addr} not found.')
+        raise exceptions.NotFound(description=f'device witch mac_addr {mac_addr} not found')
 
     reported_fields = {}
     allowed_report_fields = ['mac_addr', 'ipv4_addr', 'ipv6_addr', 'protocol', 'port',
-                             'sync_mode', 'report_interval', 'attrs']
-    for field, target in request.form.items():
+                             'sync_mode', 'sync_interval', 'attrs']
+    for field, value in request.form.items():
         if field in allowed_report_fields:
-            reported_fields[field] = target
+            reported_fields[field] = value
         else:
-            raise exceptions.BadRequest(description=f'Field {field} is not allowed to be reported.')
+            raise exceptions.BadRequest(description=f'Field {field} is not allowed to be reported')
 
     try:
         device.update(reported_fields)
         device.online()
         device.save()
     except ValidationError as e:
-        error_msg = ''.join([f'{error["loc"][0]}: {error["msg"]}' for error in e.errors()])
+        error_msg = '; '.join([f'{error["loc"][0]}: {error["msg"]}' for error in e.errors()])
         raise exceptions.BadRequest(description=error_msg)
 
     return device_view(device, exclude_keys=['attrs'])
